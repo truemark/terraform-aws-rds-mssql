@@ -1,1 +1,62 @@
 # AWS RDS MSSQL
+
+This repo defines an [MSSQL RDS database server](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_SQLServer.html).  
+
+The following parameters are supported:
+
+- allocated_storage
+- allow_major_version_upgrade
+- allowed_cidr_blocks
+- allowed_security_groups
+- apply_immediately
+- archive_bucket_name
+- auto_minor_version_upgrade
+- backup_retention_period
+- backup_window
+- character_set_name
+- copy_tags_to_snapshot
+- create_monitoring_role
+- create_security_group
+- database_name
+- db_parameters
+- db_subnet_group_use_name_prefix
+- deletion_protection
+- egress_cidrs
+- engine
+- engine_version
+- final_snapshot_identifier_prefix
+- iam_database_authentication_enabled
+- iam_partition
+- ingress_cidrs
+- instance_class
+- instance_name
+- iops
+- kms_key_id
+- license_model
+- maintenance_window
+- major_engine_version
+- max_allocated_storage
+- monitoring_interval
+- monitoring_role_name
+- multi_az
+- option_group_name
+- parameter_group_family
+- performance_insights_enabled
+- performance_insights_kms_key_id
+- permissions_boundary
+- port
+- publicly_accessible
+- random_password_length
+- security_group_description
+- security_group_tags
+- skip_final_snapshot
+- snapshot_identifier
+- storage_encrypted
+- storage_type
+- store_master_password_as_secret
+- subnet_group_use_name_prefix
+- subnets
+- tags
+- timezone
+- username
+- vpc_id
