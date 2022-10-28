@@ -2,7 +2,7 @@
 resource "aws_db_instance_role_association" "ad" {
   db_instance_identifier = module.db.db_instance_id
   role_arn               = aws_iam_role.ad.arn
-  feature_name           = "not sure"
+  feature_name           = "Directory Service"
 }
 
 resource "aws_iam_role" "ad" {
