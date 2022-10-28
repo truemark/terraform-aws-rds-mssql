@@ -19,7 +19,7 @@ resource "aws_iam_role" "ad" {
       {
         Action = "sts:AssumeRole"
         Effect = "Allow"
-        Sid    = ""
+        Sid    = "ad-assume-role"
         Principal = {
           Service = "rds.amazonaws.com"
         }
@@ -34,6 +34,9 @@ resource "aws_iam_role_policy_attachment" "ad" {
   role  = aws_iam_role.ad[0].name
   # The actions the role can execute
   policy_arn = data.aws_iam_policy.ad.arn
+  depends_on = [
+    aws_iam_role.ad
+  ]
 }
 
 data "aws_iam_policy" "ad" {
