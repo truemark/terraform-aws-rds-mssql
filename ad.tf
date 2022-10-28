@@ -11,22 +11,10 @@ resource "aws_db_instance_role_association" "ad" {
 }
 
 resource "aws_iam_role" "ad" {
-  count = var.domain_id == "" ? 0 : 1
-  name  = "${lower(var.instance_name)}-active-directory"
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action = "sts:AssumeRole"
-        Effect = "Allow"
-        Sid    = "ADAssumeRole"
-        Principal = {
-          Service = "rds.amazonaws.com"
-        }
-      },
-    ]
-  })
-
+  count              = var.domain_id == "" ? 0 : 1
+  name               = "${lower(var.instance_name)}-active-directory"
+  description        = "Role used by RDS for Active Directory authentication and authorization"
+  assume_role_policy = data.aws_iam_policy_document.rds_assume_role.json
 }
 
 resource "aws_iam_role_policy_attachment" "ad" {
@@ -41,4 +29,19 @@ resource "aws_iam_role_policy_attachment" "ad" {
 
 data "aws_iam_policy" "ad" {
   arn = "arn:aws:iam::aws:policy/service-role/AmazonRDSDirectoryServiceAccess"
+}
+
+data "aws_iam_policy_document" "rds_assume_role" {
+  statement {
+    sid = "AssumeRole"
+
+    actions = [
+      "sts:AssumeRole",
+    ]
+
+    principals {
+      type        = "Service"
+      identifiers = ["rds.amazonaws.com"]
+    }
+  }
 }
