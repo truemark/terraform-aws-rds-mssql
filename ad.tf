@@ -19,7 +19,7 @@ resource "aws_iam_role" "ad" {
       {
         Action = "sts:AssumeRole"
         Effect = "Allow"
-        Sid    = "ad-assume-role"
+        Sid    = "ADAssumeRole"
         Principal = {
           Service = "rds.amazonaws.com"
         }
