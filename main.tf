@@ -1,5 +1,3 @@
-# TODO Add AD support: domain, domain_iam_role_name
-# https://registry.terraform.io/modules/terraform-aws-modules/rds/aws/latest
 module "db" {
 
   source  = "terraform-aws-modules/rds/aws"
@@ -21,6 +19,7 @@ module "db" {
   db_subnet_group_name                = var.instance_name
   db_subnet_group_use_name_prefix     = var.db_subnet_group_use_name_prefix
   deletion_protection                 = var.deletion_protection
+  domain                              = var.domain_id
   enabled_cloudwatch_logs_exports     = ["agent", "error"]
   engine                              = var.engine
   engine_version                      = var.engine_version
@@ -61,7 +60,7 @@ resource "aws_db_parameter_group" "db_parameter_group" {
   family      = var.parameter_group_family
   tags        = var.tags
   dynamic "parameter" {
-    for_each = {for a in var.db_parameters: a => a}
+    for_each = { for a in var.db_parameters : a => a }
     content {
       name         = parameter.value.name
       value        = parameter.value.value
@@ -97,7 +96,7 @@ resource "aws_secretsmanager_secret_version" "db" {
 resource "random_password" "root_password" {
   length  = var.random_password_length
   special = false
-  numeric  = false
+  numeric = false
 }
 
 data "aws_secretsmanager_secret_version" "db" {
@@ -131,7 +130,7 @@ resource "aws_db_option_group" "mssql_rds" {
   major_engine_version     = var.major_engine_version
 
   dynamic "option" {
-    for_each = {for a in aws_iam_role.s3_data_archive.*.arn: a => a}
+    for_each = { for a in aws_iam_role.s3_data_archive.*.arn : a => a }
     content {
       option_name = "SQLSERVER_BACKUP_RESTORE"
       option_settings {
@@ -147,27 +146,27 @@ resource "aws_db_option_group" "mssql_rds" {
 ################################################################################
 
 resource "aws_db_instance_role_association" "s3_data_archive" {
-  count = var.archive_bucket_name != null ? 1 : 0
+  count                  = var.archive_bucket_name != null ? 1 : 0
   db_instance_identifier = module.db.db_instance_id
   feature_name           = "S3_INTEGRATION"
   role_arn               = join("", aws_iam_role.s3_data_archive.*.arn)
 }
 
 resource "aws_iam_role" "s3_data_archive" {
-  count = var.archive_bucket_name != null ? 1 : 0
+  count              = var.archive_bucket_name != null ? 1 : 0
   name               = "s3-data-archive-${lower(var.instance_name)}"
   assume_role_policy = join("", data.aws_iam_policy_document.assume_s3_data_archive_role_policy.*.json)
 }
 
 resource "aws_iam_role_policy_attachment" "s3_data_archive" {
   count = var.archive_bucket_name != null ? 1 : 0
-  role = join("", aws_iam_role.s3_data_archive.*.name)
+  role  = join("", aws_iam_role.s3_data_archive.*.name)
   # The actions the role can execute
   policy_arn = join("", aws_iam_policy.s3_data_archive.*.arn)
 }
 
 resource "aws_iam_policy" "s3_data_archive" {
-  count = var.archive_bucket_name != null ? 1 : 0
+  count       = var.archive_bucket_name != null ? 1 : 0
   name        = "s3-data-archive-${lower(var.instance_name)}"
   description = "Terraform managed RDS Instance policy."
   policy      = join("", data.aws_iam_policy_document.exec_s3_data_archive.*.json)

@@ -1,78 +1,6 @@
-variable "ingress_cidrs" {
-  description = "List of IPv4 CIDR ranges to use on all ingress rules."
-  type        = list(string)
-  default     = ["0.0.0.0/0"]
-}
-
-variable "egress_cidrs" {
-  description = "List of IPv4 CIDR ranges to use on all egress rules."
-  type        = list(string)
-  default     = ["0.0.0.0/0"]
-}
-
-variable "tags" {
-  description = "A map of tags to add to all resources."
-  type        = map(string)
-  default     = {}
-}
-
-variable "copy_tags_to_snapshot" {
-  description = "Copy all Cluster tags to snapshots."
-  type        = bool
-  default     = false
-}
-
-variable "instance_name" {
-  description = "Name for the MSSQL RDS instance. This will display in the console."
-  type        = string
-}
-
-variable "username" {
-  description = "The master database account to create."
-  type        = string
-  default     = "root"
-}
-
-variable "engine" {
-  description = "The database engine to use."
-  type        = string
-  default     = "sqlserver-se"
-}
-
-variable "engine_version" {
-  description = "MSSQL database engine version."
-  type        = string
-  default     = "15.00.4073.23.v1"
-}
-
-variable "major_engine_version" {
-  description = "MSSQL major database engine version."
-  type        = string
-  default     = "15.00"
-}
-
-variable "parameter_group_family" {
-  description = "The family of the DB parameter group"
-  type        = string
-  default     = "sqlserver-se-15.0"
-}
-
-variable "option_group_name" {
-  description = "The name of this specific dbs option group."
-  type        = string
-  default     = ""
-}
-
-variable "instance_class" {
-  description = "The instance type of the RDS instance"
-  type        = string
-  default     = "db.m6i.large"
-}
-
-variable "publicly_accessible" {
-  description = "Bool to control if instance is publicly accessible."
-  type        = bool
-  default     = false
+variable "account_id" {
+  description = "The account id where this db resides."
+  type        = number
 }
 
 variable "allocated_storage" {
@@ -81,65 +9,43 @@ variable "allocated_storage" {
   default     = 20
 }
 
-variable "max_allocated_storage" {
-  description = "Maximum storage size in GB."
-  type        = number
-  default     = 500
-}
-
-variable "multi_az" {
-  description = "Specifies if the RDS instance is multi-AZ."
+variable "allow_major_version_upgrade" {
+  description = "Indicates that major version upgrades are allowed."
   type        = bool
   default     = false
 }
 
-variable "storage_encrypted" {
-  description = "Specifies if the RDS instance is multi-AZ."
+variable "allowed_cidr_blocks" {
+  description = "A list of CIDR blocks which are allowed to access the database"
+  type        = list(string)
+  default     = []
+}
+
+variable "allowed_security_groups" {
+  description = "A list of Security Group ID's to allow access to."
+  type        = list(string)
+  default     = []
+}
+
+variable "apply_immediately" {
+  description = "Specifies whether any database modifications are applied immediately, or during the next maintenance window."
   type        = bool
   default     = true
 }
 
-variable "timezone" {
-  description = "Time zone of the DB instance. The timezone can only be set on creation (MSSQL specific)."
+variable "archive_bucket_name" {
+  description = "The S3 bucket this db has access to for export / import."
   type        = string
-  default     = "UTC"
+  default     = null
 }
 
-variable "port" {
-  description = "The port on which to accept connections"
-  type        = number
-  default     = 1433
-}
-
-variable "iops" {
-  description = "The iops to associate with the storage"
-  type        = number
-  default     = 0
-}
-
-variable "storage_type" {
-  description = "One of 'standard' (magnetic), 'gp2' (general purpose SSD), or 'io1' (provisioned IOPS SSD)."
-  type        = string
-  default     = "gp2"
-}
-
-variable "final_snapshot_identifier_prefix" {
-  description = "The prefix name to use when creating a final snapshot on cluster destroy, appends a random 8 digits to name to ensure it's unique too."
-  type        = string
-  default     = "final"
-}
-
-variable "skip_final_snapshot" {
-  description = "Should a final snapshot be created on cluster destroy"
+variable "auto_minor_version_upgrade" {
+  description = "Indicates that minor engine upgrades will be applied automatically to the DB instance during the maintenance window."
   type        = bool
-  default     = false
+  default     = true
 }
 
-variable "deletion_protection" {
-  description = "If the DB instance should have deletion protection enabled"
-  type        = bool
-  default     = false
-}
+# https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Appendix.SQLServer.CommonDBATasks.Collation.html
 
 variable "backup_retention_period" {
   description = "How long to keep backups for (in days)"
@@ -153,41 +59,16 @@ variable "backup_window" {
   default     = "03:00-03:30"
 }
 
-variable "maintenance_window" {
-  description = "The window to perform maintenance in. Syntax: 'ddd:hh24:mi-ddd:hh24:mi'. Eg: 'Mon:00:00-Mon:03:00'"
-  type        = string
-  default     = "sun:05:00-sun:06:00"
-}
-
-variable "allow_major_version_upgrade" {
-  description = "Indicates that major version upgrades are allowed."
-  type        = bool
-  default     = false
-}
-
-variable "apply_immediately" {
-  description = "Specifies whether any database modifications are applied immediately, or during the next maintenance window."
-  type        = bool
-  default     = true
-}
-
-variable "auto_minor_version_upgrade" {
-  description = "Indicates that minor engine upgrades will be applied automatically to the DB instance during the maintenance window."
-  type        = bool
-  default     = true
-}
-
-# https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Appendix.SQLServer.CommonDBATasks.Collation.html
 variable "character_set_name" {
   description = "The character set name to use for DB encoding in Oracle instances. This can't be changed. See Oracle Character Sets Supported in Amazon RDS and Collations and Character Sets for Microsoft SQL Server for more information. This can only be set on creation."
   type        = string
   default     = "SQL_Latin1_General_CP1_CI_AS"
 }
 
-variable "monitoring_role_name" {
-  description = "Name of the IAM role which will be created when enhanced monitoring is enabled by setting create_monitoring_role to true."
-  type        = string
-  default     = null
+variable "copy_tags_to_snapshot" {
+  description = "Copy all Cluster tags to snapshots."
+  type        = bool
+  default     = false
 }
 
 variable "create_monitoring_role" {
@@ -196,94 +77,9 @@ variable "create_monitoring_role" {
   default     = true
 }
 
-variable "monitoring_interval" {
-  description = "The interval (seconds) between points when Enhanced Monitoring metrics are collected. Setting to 0 disables enhanced monitoring."
-  type        = number
-  default     = 0
-}
-
-variable "iam_partition" {
-  description = "IAM Partition to use when generating ARN's. For most regions this can be left at default. China/Govcloud use different partitions"
-  type        = string
-  default     = "aws"
-}
-
-variable "permissions_boundary" {
-  description = "The ARN of the policy that is used to set the permissions boundary for the role."
-  type        = string
-  default     = null
-}
-
-variable "performance_insights_enabled" {
-  description = "Specifies whether Performance Insights is enabled or not."
-  type        = bool
-  default     = false
-}
-
-variable "performance_insights_kms_key_id" {
-  description = "The ARN for the KMS key to encrypt Performance Insights data."
-  type        = string
-  default     = ""
-}
-
-variable "iam_database_authentication_enabled" {
-  description = "Specifies whether IAM Database authentication should be enabled or not. Not all versions and instances are supported. Refer to the AWS documentation to see which versions are supported."
-  type        = bool
-  default     = false
-}
-
 variable "create_security_group" {
   description = "Whether to create security group for RDS cluster"
   type        = bool
-  default     = true
-}
-
-variable "security_group_tags" {
-  description = "Additional tags for the security group"
-  type        = map(string)
-  default     = {}
-}
-
-variable "security_group_description" {
-  description = "The description of the security group. If value is set to empty string it will contain cluster name in the description."
-  type        = string
-  default     = "Managed by Terraform"
-}
-
-variable "allowed_security_groups" {
-  description = "A list of Security Group ID's to allow access to."
-  type        = list(string)
-  default     = []
-}
-
-variable "allowed_cidr_blocks" {
-  description = "A list of CIDR blocks which are allowed to access the database"
-  type        = list(string)
-  default     = []
-}
-
-variable "vpc_id" {
-  description = "The ID of the VPC to provision a db in."
-  type        = string
-}
-
-variable "subnets" {
-  description = "List of subnet IDs to use"
-  type        = list(string)
-}
-
-variable "license_model" {
-  description = "One of license-included, bring-your-own-license, general-public-license"
-  default     = "license-included"
-}
-
-variable "random_password_length" {
-  description = "The length of the password to generate for root user."
-  type        = number
-  default     = 16
-}
-variable "store_master_password_as_secret" {
-  description = "Toggle on or off storing the root password in Secrets Manager."
   default     = true
 }
 
@@ -299,32 +95,249 @@ variable "db_parameters" {
   default     = []
 }
 
+variable "db_subnet_group_use_name_prefix" {
+  description = "Specifies whether or not to use the server name as a prefix for the subnet group."
+  type        = bool
+  default     = false
+}
+
+variable "deletion_protection" {
+  description = "If the DB instance should have deletion protection enabled"
+  type        = bool
+  default     = false
+}
+
+variable "domain_id" {
+  description = "The ID of the Directory Service Active Directory domain to create the instance in."
+  type        = string
+  default     = ""
+}
+
+variable "egress_cidrs" {
+  description = "List of IPv4 CIDR ranges to use on all egress rules."
+  type        = list(string)
+  default     = ["0.0.0.0/0"]
+}
+
+variable "engine" {
+  description = "The database engine to use."
+  type        = string
+  default     = "sqlserver-se"
+}
+
+variable "engine_version" {
+  description = "MSSQL database engine version."
+  type        = string
+  default     = "15.00.4073.23.v1"
+}
+
+variable "final_snapshot_identifier_prefix" {
+  description = "The prefix name to use when creating a final snapshot on cluster destroy, appends a random 8 digits to name to ensure it's unique too."
+  type        = string
+  default     = "final"
+}
+
+variable "iam_database_authentication_enabled" {
+  description = "Specifies whether IAM Database authentication should be enabled or not. Not all versions and instances are supported. Refer to the AWS documentation to see which versions are supported."
+  type        = bool
+  default     = false
+}
+
+variable "iam_partition" {
+  description = "IAM Partition to use when generating ARN's. For most regions this can be left at default. China/Govcloud use different partitions"
+  type        = string
+  default     = "aws"
+}
+
+variable "ingress_cidrs" {
+  description = "List of IPv4 CIDR ranges to use on all ingress rules."
+  type        = list(string)
+  default     = ["0.0.0.0/0"]
+}
+
+variable "instance_class" {
+  description = "The instance type of the RDS instance"
+  type        = string
+  default     = "db.m6i.large"
+}
+
+variable "instance_name" {
+  description = "Name for the MSSQL RDS instance. This will display in the console."
+  type        = string
+}
+
+variable "iops" {
+  description = "The iops to associate with the storage"
+  type        = number
+  default     = 0
+}
+
 variable "kms_key_id" {
   description = "The ARN for the KMS key to encrypt the database."
   type        = string
   default     = ""
 }
 
-variable "archive_bucket_name" {
-   description = "The S3 bucket this db has access to for export / import."
-   type = string
-   default = null
- }
+variable "license_model" {
+  description = "One of license-included, bring-your-own-license, general-public-license"
+  default     = "license-included"
+}
+
+variable "maintenance_window" {
+  description = "The window to perform maintenance in. Syntax: 'ddd:hh24:mi-ddd:hh24:mi'. Eg: 'Mon:00:00-Mon:03:00'"
+  type        = string
+  default     = "sun:05:00-sun:06:00"
+}
+
+variable "major_engine_version" {
+  description = "MSSQL major database engine version."
+  type        = string
+  default     = "15.00"
+}
+
+variable "max_allocated_storage" {
+  description = "Maximum storage size in GB."
+  type        = number
+  default     = 500
+}
+
+variable "monitoring_interval" {
+  description = "The interval (seconds) between points when Enhanced Monitoring metrics are collected. Setting to 0 disables enhanced monitoring."
+  type        = number
+  default     = 0
+}
+
+variable "monitoring_role_name" {
+  description = "Name of the IAM role which will be created when enhanced monitoring is enabled by setting create_monitoring_role to true."
+  type        = string
+  default     = null
+}
+
+variable "multi_az" {
+  description = "Specifies if the RDS instance is multi-AZ."
+  type        = bool
+  default     = false
+}
+
+variable "option_group_name" {
+  description = "The name of this specific dbs option group."
+  type        = string
+  default     = ""
+}
+
+variable "parameter_group_family" {
+  description = "The family of the DB parameter group"
+  type        = string
+  default     = "sqlserver-se-15.0"
+}
+
+variable "performance_insights_enabled" {
+  description = "Specifies whether Performance Insights is enabled or not."
+  type        = bool
+  default     = false
+}
+
+variable "performance_insights_kms_key_id" {
+  description = "The ARN for the KMS key to encrypt Performance Insights data."
+  type        = string
+  default     = ""
+}
+
+variable "permissions_boundary" {
+  description = "The ARN of the policy that is used to set the permissions boundary for the role."
+  type        = string
+  default     = null
+}
+
+variable "port" {
+  description = "The port on which to accept connections"
+  type        = number
+  default     = 1433
+}
+
+variable "publicly_accessible" {
+  description = "Bool to control if instance is publicly accessible."
+  type        = bool
+  default     = false
+}
+
+variable "random_password_length" {
+  description = "The length of the password to generate for root user."
+  type        = number
+  default     = 16
+}
+
+variable "security_group_description" {
+  description = "The description of the security group. If value is set to empty string it will contain cluster name in the description."
+  type        = string
+  default     = "Managed by Terraform"
+}
+
+variable "security_group_tags" {
+  description = "Additional tags for the security group"
+  type        = map(string)
+  default     = {}
+}
+
+variable "skip_final_snapshot" {
+  description = "Should a final snapshot be created on cluster destroy"
+  type        = bool
+  default     = false
+}
 
 variable "snapshot_identifier" {
-   description = "Specifies whether or not to create this database from a snapshot. This correlates to the snapshot ID you'd find in the RDS console, e.g: rds:production-2015-06-26-06-05."
-   type = string
-   default = null
- }
+  description = "Specifies whether or not to create this database from a snapshot. This correlates to the snapshot ID you'd find in the RDS console, e.g: rds:production-2015-06-26-06-05."
+  type        = string
+  default     = null
+}
+
+variable "storage_encrypted" {
+  description = "Specifies if the RDS instance is multi-AZ."
+  type        = bool
+  default     = true
+}
+
+variable "storage_type" {
+  description = "One of 'standard' (magnetic), 'gp2' (general purpose SSD), or 'io1' (provisioned IOPS SSD)."
+  type        = string
+  default     = "gp2"
+}
+
+variable "store_master_password_as_secret" {
+  description = "Toggle on or off storing the root password in Secrets Manager."
+  default     = true
+}
 
 variable "subnet_group_use_name_prefix" {
-   description = "Specifies whether or not to use the server name as a prefix for the subnet group."
-   type = bool
-   default = false
- }
+  description = "Specifies whether or not to use the server name as a prefix for the subnet group."
+  type        = bool
+  default     = false
+}
 
-variable "db_subnet_group_use_name_prefix" {
-   description = "Specifies whether or not to use the server name as a prefix for the subnet group."
-   type = bool
-   default = false
- }
+variable "subnets" {
+  description = "List of subnet IDs to use"
+  type        = list(string)
+}
+
+variable "tags" {
+  description = "A map of tags to add to all resources."
+  type        = map(string)
+  default     = {}
+}
+
+variable "timezone" {
+  description = "Time zone of the DB instance. The timezone can only be set on creation (MSSQL specific)."
+  type        = string
+  default     = "UTC"
+}
+
+variable "username" {
+  description = "The master database account to create."
+  type        = string
+  default     = "root"
+}
+
+variable "vpc_id" {
+  description = "The ID of the VPC to provision a db in."
+  type        = string
+}
