@@ -21,6 +21,7 @@ The following parameters are supported:
 - db_parameters
 - db_subnet_group_use_name_prefix
 - deletion_protection
+- domain_id
 - egress_cidrs
 - engine
 - engine_version

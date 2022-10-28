@@ -1,5 +1,3 @@
-# TODO Add AD support: domain, domain_iam_role_name
-# https://registry.terraform.io/modules/terraform-aws-modules/rds/aws/latest
 module "db" {
 
   source  = "terraform-aws-modules/rds/aws"
@@ -21,6 +19,7 @@ module "db" {
   db_subnet_group_name                = var.instance_name
   db_subnet_group_use_name_prefix     = var.db_subnet_group_use_name_prefix
   deletion_protection                 = var.deletion_protection
+  domain                              = var.domain_id
   enabled_cloudwatch_logs_exports     = ["agent", "error"]
   engine                              = var.engine
   engine_version                      = var.engine_version
