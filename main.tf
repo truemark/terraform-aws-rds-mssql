@@ -1,8 +1,7 @@
 module "db" {
-
-  source  = "terraform-aws-modules/rds/aws"
-  version = "5.1.0"
-
+  count                               = var.create ? 1 : 0
+  source                              = "terraform-aws-modules/rds/aws"
+  version                             = "5.1.0"
   allocated_storage                   = var.allocated_storage
   allow_major_version_upgrade         = var.allow_major_version_upgrade
   apply_immediately                   = var.apply_immediately
@@ -37,8 +36,8 @@ module "db" {
   monitoring_role_name                = var.monitoring_role_name == null ? "${var.instance_name}-monitoring-role" : var.monitoring_role_name
   multi_az                            = var.multi_az
   option_group_name                   = aws_db_option_group.mssql_rds[0].name
-  parameter_group_name                = aws_db_parameter_group.db_parameter_group.name
-  password                            = random_password.root_password.result
+  parameter_group_name                = aws_db_parameter_group.db_parameter_group[count.index].name
+  password                            = random_password.root_password[count.index].result
   performance_insights_enabled        = var.performance_insights_enabled
   performance_insights_kms_key_id     = var.performance_insights_kms_key_id
   port                                = var.port
@@ -51,10 +50,11 @@ module "db" {
   tags                                = var.tags
   timezone                            = var.timezone
   username                            = var.username
-  vpc_security_group_ids              = [aws_security_group.db_security_group.id]
+  vpc_security_group_ids              = [aws_security_group.db_security_group[count.index].id]
 }
 
 resource "aws_db_parameter_group" "db_parameter_group" {
+  count       = var.create ? 1 : 0
   name_prefix = var.instance_name
   description = "Terraform managed parameter group for ${var.instance_name}"
   family      = var.parameter_group_family
@@ -73,41 +73,48 @@ resource "aws_db_parameter_group" "db_parameter_group" {
 # these 4 objects below define the root secret.
 
 resource "aws_secretsmanager_secret" "db" {
-  count       = var.store_master_password_as_secret ? 1 : 0
+  count       = var.create && var.store_master_password_as_secret ? 1 : 0
   name_prefix = "database/${var.instance_name}/master-"
   description = "Master password for ${var.username} in ${var.instance_name}"
   tags        = var.tags
 }
 
 resource "aws_secretsmanager_secret_version" "db" {
-  count     = var.store_master_password_as_secret ? 1 : 0
+
+  count     = var.create && var.store_master_password_as_secret ? 1 : 0
   secret_id = aws_secretsmanager_secret.db[count.index].id
   secret_string = jsonencode({
     "username"       = "root"
-    "password"       = random_password.root_password.result
-    "host"           = module.db.db_instance_address
-    "port"           = module.db.db_instance_port
+    "password"       = random_password.root_password[count.index].result
+    "host"           = module.db[count.index].db_instance_address
+    "port"           = module.db[count.index].db_instance_port
     "dbname"         = "master"
-    "connect_string" = join("", concat(["${module.db.db_instance_address}"], [","], [module.db.db_instance_port]))
-    "engine"         = "mssql"
+    "connect_string" = concat(["${module.db[count.index].db_instance_address}"], [","], ["${module.db[count.index].db_instance_port}"])
+    # "connect_string" = join("", concat(["${module.db[count.index].db_instance_address}"], [","]))
+    "engine" = "mssql"
   })
 }
 
 resource "random_password" "root_password" {
+  count = var.create ? 1 : 0
+
   length  = var.random_password_length
   special = false
   numeric = false
 }
 
 data "aws_secretsmanager_secret_version" "db" {
+  count = var.create ? 1 : 0
+
   # There will only ever be one password here. Hard coding the index.
-  secret_id  = aws_secretsmanager_secret.db[0].id
+  secret_id  = aws_secretsmanager_secret.db[count.index].id
   depends_on = [aws_secretsmanager_secret_version.db]
 }
 
 #-----------------------------------------------------------------------------
 
 resource "aws_security_group" "db_security_group" {
+  count  = var.create ? 1 : 0
   name   = var.instance_name
   vpc_id = var.vpc_id
   tags   = var.tags
@@ -123,7 +130,7 @@ resource "aws_security_group" "db_security_group" {
 #-----------------------------------------------------------------------------
 # Define the option group explicitly so we can implement SQLSERVER_BACKUP_RESTORE
 resource "aws_db_option_group" "mssql_rds" {
-  count                    = 1
+  count                    = var.create ? 1 : 0
   name_prefix              = var.instance_name
   option_group_description = "MSSQL RDS Option Group managed by Terraform."
   engine_name              = var.engine
@@ -146,34 +153,34 @@ resource "aws_db_option_group" "mssql_rds" {
 ################################################################################
 
 resource "aws_db_instance_role_association" "s3_data_archive" {
-  count                  = var.archive_bucket_name != null ? 1 : 0
-  db_instance_identifier = module.db.db_instance_id
+  count                  = var.create && var.archive_bucket_name != null ? 1 : 0
+  db_instance_identifier = join("", module.db[count.index].db_instance_id)
   feature_name           = "S3_INTEGRATION"
   role_arn               = join("", aws_iam_role.s3_data_archive.*.arn)
 }
 
 resource "aws_iam_role" "s3_data_archive" {
-  count              = var.archive_bucket_name != null ? 1 : 0
+  count              = var.create && var.archive_bucket_name != null ? 1 : 0
   name               = "s3-data-archive-${lower(var.instance_name)}"
   assume_role_policy = join("", data.aws_iam_policy_document.assume_s3_data_archive_role_policy.*.json)
 }
 
 resource "aws_iam_role_policy_attachment" "s3_data_archive" {
-  count = var.archive_bucket_name != null ? 1 : 0
+  count = var.create && var.archive_bucket_name != null ? 1 : 0
   role  = join("", aws_iam_role.s3_data_archive.*.name)
   # The actions the role can execute
   policy_arn = join("", aws_iam_policy.s3_data_archive.*.arn)
 }
 
 resource "aws_iam_policy" "s3_data_archive" {
-  count       = var.archive_bucket_name != null ? 1 : 0
+  count       = var.create && var.archive_bucket_name != null ? 1 : 0
   name        = "s3-data-archive-${lower(var.instance_name)}"
   description = "Terraform managed RDS Instance policy."
   policy      = join("", data.aws_iam_policy_document.exec_s3_data_archive.*.json)
 }
 
 data "aws_iam_policy_document" "assume_s3_data_archive_role_policy" {
-  count = var.archive_bucket_name != null ? 1 : 0
+  count = var.create && var.archive_bucket_name != null ? 1 : 0
   statement {
     actions = [
       "sts:AssumeRole"
@@ -189,7 +196,7 @@ data "aws_iam_policy_document" "assume_s3_data_archive_role_policy" {
 }
 
 data "aws_iam_policy_document" "exec_s3_data_archive" {
-  count = var.archive_bucket_name != null ? 1 : 0
+  count = var.create && var.archive_bucket_name != null ? 1 : 0
   statement {
     actions = [
       "s3:ListBucket",
@@ -215,7 +222,7 @@ data "aws_iam_policy_document" "exec_s3_data_archive" {
   }
 
   dynamic "statement" {
-    for_each = {for a in [var.kms_key_id]: a => a}
+    for_each = { for a in [var.kms_key_id] : a => a }
     content {
       actions = [
         "kms:Decrypt",

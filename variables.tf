@@ -77,6 +77,12 @@ variable "create_monitoring_role" {
   default     = true
 }
 
+variable "create" {
+  description = "Determines if resources are created."
+  default     = true
+  type        = bool
+}
+
 variable "create_security_group" {
   description = "Whether to create security group for RDS cluster"
   type        = bool
