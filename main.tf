@@ -154,7 +154,7 @@ resource "aws_db_option_group" "mssql_rds" {
 
 resource "aws_db_instance_role_association" "s3_data_archive" {
   count                  = var.create && var.archive_bucket_name != null ? 1 : 0
-  db_instance_identifier = join("", module.db[count.index].db_instance_id)
+  db_instance_identifier = module.db[count.index].db_instance_id
   feature_name           = "S3_INTEGRATION"
   role_arn               = join("", aws_iam_role.s3_data_archive.*.arn)
 }
