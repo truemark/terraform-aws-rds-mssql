@@ -90,7 +90,7 @@ resource "aws_secretsmanager_secret_version" "db" {
     "port"           = module.db[count.index].db_instance_port
     "dbname"         = "master"
     "connect_string" = "${module.db[count.index].db_instance_address},${module.db[count.index].db_instance_port}"
-    "engine" = "mssql"
+    "engine"         = "mssql"
   })
 }
 
