@@ -89,8 +89,7 @@ resource "aws_secretsmanager_secret_version" "db" {
     "host"           = module.db[count.index].db_instance_address
     "port"           = module.db[count.index].db_instance_port
     "dbname"         = "master"
-    "connect_string" = concat(["${module.db[count.index].db_instance_address}"], [","], ["${module.db[count.index].db_instance_port}"])
-    # "connect_string" = join("", concat(["${module.db[count.index].db_instance_address}"], [","]))
+    "connect_string" = "${module.db[count.index].db_instance_address},${module.db[count.index].db_instance_port}"
     "engine" = "mssql"
   })
 }
