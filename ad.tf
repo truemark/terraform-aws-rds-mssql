@@ -1,14 +1,3 @@
-# TODO: Make the domain id truly optional. Currently this module will
-# create all objects required to integrate AD with the instance, but
-# the instance will not be associated with the role.
-
-# All objects required to hook this db up to Active Directory
-resource "aws_db_instance_role_association" "ad" {
-  count                  = var.create && var.domain_id == "" ? 0 : 1
-  db_instance_identifier = module.db[count.index].db_instance_id
-  role_arn               = aws_iam_role.ad[0].arn
-  feature_name           = "Directory Service"
-}
 
 resource "aws_iam_role" "ad" {
   count = var.create && var.domain_id == "" ? 0 : 1

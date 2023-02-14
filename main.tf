@@ -19,6 +19,7 @@ module "db" {
   db_subnet_group_use_name_prefix     = var.db_subnet_group_use_name_prefix
   deletion_protection                 = var.deletion_protection
   domain                              = var.domain_id
+  domain_iam_role_name                = aws_iam_role.ad[count.index].name
   enabled_cloudwatch_logs_exports     = ["agent", "error"]
   engine                              = var.engine
   engine_version                      = var.engine_version
@@ -89,9 +90,8 @@ resource "aws_secretsmanager_secret_version" "db" {
     "host"           = module.db[count.index].db_instance_address
     "port"           = module.db[count.index].db_instance_port
     "dbname"         = "master"
-    "connect_string" = concat(["${module.db[count.index].db_instance_address}"], [","], ["${module.db[count.index].db_instance_port}"])
-    # "connect_string" = join("", concat(["${module.db[count.index].db_instance_address}"], [","]))
-    "engine" = "mssql"
+    "connect_string" = "${module.db[count.index].db_instance_address},${module.db[count.index].db_instance_port}"
+    "engine"         = "mssql"
   })
 }
 
