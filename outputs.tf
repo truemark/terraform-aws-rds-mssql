@@ -91,10 +91,10 @@ output "enhanced_monitoring_iam_role_name" {
 
 output "master_secret_arn" {
   description = "The id of the secret storing root credentials."
-  value       = aws_secretsmanager_secret.db[0].arn
+  value       = aws_secretsmanager_secret.db.*.arn
 }
 
 output "master_secret_id" {
   description = "The id of the secret storing root credentials."
-  value       = aws_secretsmanager_secret.db[0].id
+  value       = aws_secretsmanager_secret.db.*.id
 }

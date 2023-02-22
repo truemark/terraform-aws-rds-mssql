@@ -39,6 +39,12 @@ variable "archive_bucket_name" {
   default     = null
 }
 
+variable "audit_bucket_name" {
+  description = "The S3 bucket used to store SQL Server audit data."
+  type        = string
+  default     = null
+}
+
 variable "auto_minor_version_upgrade" {
   description = "Indicates that minor engine upgrades will be applied automatically to the DB instance during the maintenance window."
   type        = bool
