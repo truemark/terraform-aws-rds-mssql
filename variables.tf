@@ -40,7 +40,7 @@ variable "archive_bucket_name" {
 }
 
 variable "audit_bucket_name" {
-  description = "The S3 bucket used to store SQL Server audit data."
+  description = "The name of the S3 bucket used to store SQL Server audit data."
   type        = string
   default     = null
 }
