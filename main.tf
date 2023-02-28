@@ -1,7 +1,7 @@
 module "db" {
   count                               = var.create ? 1 : 0
   source                              = "terraform-aws-modules/rds/aws"
-  version                             = "5.1.0"
+  version                             = "5.6.0"
   allocated_storage                   = var.allocated_storage
   allow_major_version_upgrade         = var.allow_major_version_upgrade
   apply_immediately                   = var.apply_immediately
@@ -125,6 +125,13 @@ resource "aws_security_group" "db_security_group" {
     protocol    = "tcp"
     cidr_blocks = var.ingress_cidrs
   }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = var.egress_cidrs
+  }
 }
 
 #-----------------------------------------------------------------------------
@@ -135,17 +142,30 @@ resource "aws_db_option_group" "mssql_rds" {
   option_group_description = "MSSQL RDS Option Group managed by Terraform."
   engine_name              = var.engine
   major_engine_version     = var.major_engine_version
+  tags                     = var.tags
 
-  dynamic "option" {
-    for_each = { for a in aws_iam_role.s3_data_archive.*.arn : a => a }
-    content {
-      option_name = "SQLSERVER_BACKUP_RESTORE"
-      option_settings {
-        name  = "IAM_ROLE_ARN"
-        value = option.value
-      }
+  option {
+    option_name = "SQLSERVER_BACKUP_RESTORE"
+    option_settings {
+      name  = "IAM_ROLE_ARN"
+      value = aws_iam_role.s3_data_archive[0].arn
     }
   }
+
+  option {
+    option_name = "SQLSERVER_AUDIT"
+    option_settings {
+      name  = "IAM_ROLE_ARN"
+      value = aws_iam_role.audit[0].arn
+    }
+
+    option_settings {
+      name  = "S3_BUCKET_ARN"
+      value = "arn:aws:s3:::${var.audit_bucket_name}"
+    }
+
+  }
+
 }
 
 ################################################################################
@@ -163,6 +183,8 @@ resource "aws_iam_role" "s3_data_archive" {
   count              = var.create && var.archive_bucket_name != null ? 1 : 0
   name               = "s3-data-archive-${lower(var.instance_name)}"
   assume_role_policy = join("", data.aws_iam_policy_document.assume_s3_data_archive_role_policy.*.json)
+  tags               = var.tags
+
 }
 
 resource "aws_iam_role_policy_attachment" "s3_data_archive" {
@@ -235,3 +257,91 @@ data "aws_iam_policy_document" "exec_s3_data_archive" {
     }
   }
 }
+
+################################################################################
+# Create an IAM policy to attach to the instance role.
+# This policy allows access to the s3 bucket for SQL Server Audit.
+################################################################################
+
+resource "aws_db_instance_role_association" "audit" {
+  count                  = var.create && var.audit_bucket_name != null ? 1 : 0
+  db_instance_identifier = module.db[count.index].db_instance_id
+  feature_name           = "SQLSERVER_AUDIT"
+  role_arn               = join("", aws_iam_role.audit.*.arn)
+}
+
+resource "aws_iam_role" "audit" {
+  count              = var.create && var.audit_bucket_name != null ? 1 : 0
+  name               = "s3-audit-data-${lower(var.instance_name)}"
+  assume_role_policy = join("", data.aws_iam_policy_document.audit_trust.*.json)
+  tags               = var.tags
+}
+
+resource "aws_iam_role_policy_attachment" "audit" {
+  count = var.create && var.audit_bucket_name != null ? 1 : 0
+  role  = join("", aws_iam_role.audit.*.name)
+  # The actions the role can execute
+  policy_arn = join("", aws_iam_policy.audit.*.arn)
+}
+
+resource "aws_iam_policy" "audit" {
+  count       = var.create && var.audit_bucket_name != null ? 1 : 0
+  name        = "s3-audit-data-${lower(var.instance_name)}"
+  description = "Terraform managed RDS Instance auditing policy."
+  policy      = join("", data.aws_iam_policy_document.audit.*.json)
+  tags        = var.tags
+}
+
+data "aws_iam_policy_document" "audit_trust" {
+  count = var.create && var.audit_bucket_name != null ? 1 : 0
+  statement {
+    actions = [
+      "sts:AssumeRole"
+    ]
+
+    effect = "Allow"
+
+    principals {
+      type        = "Service"
+      identifiers = ["rds.amazonaws.com"]
+    }
+  }
+}
+
+data "aws_iam_policy_document" "audit" {
+  count = var.create && var.audit_bucket_name != null ? 1 : 0
+  statement {
+    actions = [
+      "s3:ListAllMyBuckets",
+    ]
+    resources = [
+      "*"
+    ]
+    effect = "Allow"
+  }
+
+  statement {
+    actions = [
+      "s3:ListBucket",
+      "s3:GetBucketACL",
+      "s3:GetBucketLocation",
+    ]
+    resources = [
+      "arn:aws:s3:::${var.audit_bucket_name}"
+    ]
+    effect = "Allow"
+  }
+
+  statement {
+    actions = [
+      "s3:PutObject",
+      "s3:ListMultipartUploadParts",
+      "s3:AbortMultipartUpload",
+    ]
+    resources = [
+      "arn:aws:s3:::${var.audit_bucket_name}/*"
+    ]
+    effect = "Allow"
+  }
+}
+
