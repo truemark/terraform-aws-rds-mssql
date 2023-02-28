@@ -161,7 +161,7 @@ resource "aws_db_option_group" "mssql_rds" {
 
     option_settings {
       name  = "S3_BUCKET_ARN"
-      value = "arn:aws:s3:::${var.audit_bucket_name}/"
+      value = "arn:aws:s3:::${var.audit_bucket_name}"
     }
 
   }
@@ -270,16 +270,16 @@ resource "aws_db_instance_role_association" "audit" {
   role_arn               = join("", aws_iam_role.audit.*.arn)
 }
 
-# resource "aws_iam_role" "audit" {
-#   count              = var.create && var.audit_bucket_name != null ? 1 : 0
-#   name               = "s3-audit-data-${lower(var.instance_name)}"
-#   assume_role_policy = join("", data.aws_iam_policy_document.audit_trust.*.json)
-#   tags = var.tags
-# }
+resource "aws_iam_role" "audit" {
+  count              = var.create && var.audit_bucket_name != null ? 1 : 0
+  name               = "s3-audit-data-${lower(var.instance_name)}"
+  assume_role_policy = join("", data.aws_iam_policy_document.audit_trust.*.json)
+  tags               = var.tags
+}
 
 resource "aws_iam_role_policy_attachment" "audit" {
   count = var.create && var.audit_bucket_name != null ? 1 : 0
-  role  = join("", aws_iam_role.s3_data_archive.*.name)
+  role  = join("", aws_iam_role.audit.*.name)
   # The actions the role can execute
   policy_arn = join("", aws_iam_policy.audit.*.arn)
 }
