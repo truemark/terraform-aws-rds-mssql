@@ -134,42 +134,34 @@ resource "aws_security_group" "db_security_group" {
   }
 }
 
-#-----------------------------------------------------------------------------
-# Define the option group explicitly so we can implement SQLSERVER_BACKUP_RESTORE
+# Define the option group explicitly.
 resource "aws_db_option_group" "mssql_rds" {
-  count                    = var.create ? 1 : 0
+  count = var.create ? 1 : 0
+
   name_prefix              = var.instance_name
   option_group_description = "MSSQL RDS Option Group managed by Terraform."
   engine_name              = var.engine
   major_engine_version     = var.major_engine_version
   tags                     = var.tags
 
-  option {
-    option_name = "SQLSERVER_BACKUP_RESTORE"
-    option_settings {
-      name  = "IAM_ROLE_ARN"
-      value = aws_iam_role.s3_data_archive[0].arn
+  dynamic "option" {
+    for_each = var.mssql_options
+    content {
+      option_name                    = option.value.option_name
+      port                           = lookup(option.value, "port", null)
+      version                        = lookup(option.value, "version", null)
+      db_security_group_memberships  = lookup(option.value, "db_security_group_memberships", null)
+      vpc_security_group_memberships = lookup(option.value, "vpc_security_group_memberships", null)
+
+      dynamic "option_settings" {
+        for_each = lookup(option.value, "option_settings", [])
+        content {
+          name  = lookup(option_settings.value, "name", null)
+          value = lookup(option_settings.value, "value", null)
+        }
+      }
     }
   }
-
-  option {
-    option_name = "SQLSERVER_AUDIT"
-    option_settings {
-      name  = "IAM_ROLE_ARN"
-      value = aws_iam_role.audit[0].arn
-    }
-
-    option_settings {
-      name  = "S3_BUCKET_ARN"
-      value = "arn:aws:s3:::${var.audit_bucket_name}"
-    }
-
-  }
-
-  option {
-    option_name = "TDE"
-  }
-
 }
 
 ################################################################################
@@ -181,6 +173,9 @@ resource "aws_db_instance_role_association" "s3_data_archive" {
   db_instance_identifier = module.db[count.index].db_instance_id
   feature_name           = "S3_INTEGRATION"
   role_arn               = join("", aws_iam_role.s3_data_archive.*.arn)
+  depends_on = [
+
+  ]
 }
 
 resource "aws_iam_role" "s3_data_archive" {
@@ -226,7 +221,8 @@ data "aws_iam_policy_document" "exec_s3_data_archive" {
   statement {
     actions = [
       "s3:ListBucket",
-      "s3:GetBucketLocation"
+      "s3:GetBucketLocation",
+      "s3:GetBucketACL"
     ]
     resources = [
       "arn:aws:s3:::${var.archive_bucket_name}"
@@ -239,10 +235,20 @@ data "aws_iam_policy_document" "exec_s3_data_archive" {
       "s3:GetObject",
       "s3:PutObject",
       "s3:ListMultipartUploadParts",
-      "s3:AbortMultipartUpload",
+      "s3:AbortMultipartUpload"
     ]
     resources = [
       "arn:aws:s3:::${var.archive_bucket_name}/*"
+    ]
+    effect = "Allow"
+  }
+
+  statement {
+    actions = [
+      "s3:ListAllMyBuckets"
+    ]
+    resources = [
+      "*"
     ]
     effect = "Allow"
   }
@@ -252,7 +258,8 @@ data "aws_iam_policy_document" "exec_s3_data_archive" {
     content {
       actions = [
         "kms:Decrypt",
-        "kms:Encrypt"
+        "kms:Encrypt",
+        "kms:DescribeKey"
       ]
       resources = [
         statement.value
@@ -272,6 +279,9 @@ resource "aws_db_instance_role_association" "audit" {
   db_instance_identifier = module.db[count.index].db_instance_id
   feature_name           = "SQLSERVER_AUDIT"
   role_arn               = join("", aws_iam_role.audit.*.arn)
+  depends_on = [
+    aws_iam_role.audit
+  ]
 }
 
 resource "aws_iam_role" "audit" {
@@ -348,4 +358,90 @@ data "aws_iam_policy_document" "audit" {
     effect = "Allow"
   }
 }
+
+################################################################################
+# This is the key for Transparent Data Encryption (TDE).
+# If TDE is implemented, it must be the first option_name in the mssql_options
+# parameter (var.mssql_options[0]["option_name"] == "TDE"),
+# because splat var.mssql_options[*]["option_name"] == "TDE" does not work.
+################################################################################
+
+data "aws_caller_identity" "current" {}
+
+data "aws_region" "current" {}
+
+# # Hard coded to the primary region for SSO, as directed
+data "aws_iam_roles" "tde_dse_sso" {
+  name_regex  = "AWSReservedSSO_DataSystemsEngineer*"
+  path_prefix = "/aws-reserved/sso.amazonaws.com/us-east-2/"
+}
+
+data "aws_iam_roles" "tde_automation" {
+  name_regex = "TrueMarkDatabaseAutomation*"
+}
+
+# # The actual key definition
+resource "aws_kms_key" "tde_key" {
+  count       = var.create && var.mssql_options[0]["option_name"] == "TDE" ? 1 : 0
+  description = "The KMS key assigned to the database master key."
+  tags        = var.tags
+  policy      = data.aws_iam_policy_document.tde_policy[count.index].json
+}
+
+# # The key alias, the way all other automation refers to it
+resource "aws_kms_alias" "tde_key" {
+  count         = var.create && var.mssql_options[0]["option_name"] == "TDE" ? 1 : 0
+  name          = "alias/${var.instance_name}-key-encryption-key"
+  target_key_id = aws_kms_key.tde_key[0].arn
+}
+
+# # The key policy grants administrative access to this key (the owner).
+# # I'm not sure it's possible to define resources specific to this key only because
+# # it becomes a circular reference.
+data "aws_iam_policy_document" "tde_policy" {
+  count = var.create && var.mssql_options[0]["option_name"] == "TDE" ? 1 : 0
+  statement {
+    actions = [
+      "kms:*"
+    ]
+    resources = ["arn:aws:kms:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:key/*"]
+    # Uncomment and get popcorn
+    # resources = [ "${aws_kms_key.tde_key.arn}" ]
+    principals {
+      type = "AWS"
+      identifiers = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root",
+        "${tolist(data.aws_iam_roles.tde_dse_sso.arns)[0]}",
+      "${tolist(data.aws_iam_roles.tde_automation.arns)[0]}"]
+    }
+  }
+}
+
+# The policy that defines what users can do
+resource "aws_iam_policy" "tde_exec_policy" {
+  count  = var.create && var.mssql_options[0]["option_name"] == "TDE" ? 1 : 0
+  name   = "${var.instance_name}-key-encryption-key"
+  tags   = var.tags
+  policy = data.aws_iam_policy_document.tde_exec_policy[count.index].json
+}
+
+#
+data "aws_iam_policy_document" "tde_exec_policy" {
+  count = var.create && var.mssql_options[0]["option_name"] == "TDE" ? 1 : 0
+  statement {
+    actions = [
+      "kms:*"
+    ]
+    resources = ["arn:aws:kms:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:key/*"]
+    # resources = [aws_kms_key.tde_key[count.index].arn]
+  }
+}
+
+resource "aws_iam_role_policy_attachment" "tde_exec_policy" {
+  count = var.create && var.mssql_options[0]["option_name"] == "TDE" ? 1 : 0
+  role  = join("", aws_iam_role.s3_data_archive.*.name)
+  # The actions the role can execute
+  policy_arn = join("", aws_iam_policy.tde_exec_policy[*].arn)
+}
+
+
 

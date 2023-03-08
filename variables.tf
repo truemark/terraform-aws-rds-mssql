@@ -231,10 +231,10 @@ variable "multi_az" {
   default     = false
 }
 
-variable "option_group_name" {
-  description = "The name of this specific dbs option group."
-  type        = string
-  default     = ""
+variable "mssql_options" {
+  description = "A list of options to implement in this SQL Server database."
+  type        = any
+  default     = []
 }
 
 variable "parameter_group_family" {
