@@ -233,8 +233,15 @@ variable "multi_az" {
 
 variable "mssql_options" {
   description = "A list of options to implement in this SQL Server database."
-  type        = any
-  default     = []
+  # type        = map(any)
+  type = list(object({
+    option_name = string
+    option_settings = list(object({
+      name  = string
+      value = string
+    }))
+  }))
+  # default     = {}
 }
 
 variable "parameter_group_family" {

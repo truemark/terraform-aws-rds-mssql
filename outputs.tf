@@ -2,10 +2,6 @@ output "account_id" {
   value = data.aws_caller_identity.current.account_id
 }
 
-output "dse_role_arn" {
-  value = data.aws_iam_roles.tde_dse_sso.arns
-}
-
 output "db_instance_address" {
   description = "The address of the RDS instance"
   value       = join("", module.db.*.db_instance_address)
