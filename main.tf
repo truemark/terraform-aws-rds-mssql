@@ -19,8 +19,10 @@ module "db" {
   db_subnet_group_use_name_prefix = var.db_subnet_group_use_name_prefix
   deletion_protection             = var.deletion_protection
   domain                          = var.domain_id
-  # domain_iam_role_name                = length(aws_iam_role.ad[0].name) == 0 ? "" : aws_iam_role.ad[0].name
-  domain_iam_role_name                = aws_iam_role.ad[0].name != null ? aws_iam_role.ad[0].name : ""
+  # domain_iam_role_name                = var.domain_id == "" ? "" : "${var.instance_name}-active-directory"
+  # domain_iam_role_name                = "rds-directoryservice-access-role"
+  domain_iam_role_name = var.domain_id == "" ? "" : "${var.instance_name}-active-directory"
+
   enabled_cloudwatch_logs_exports     = ["agent", "error"]
   engine                              = var.engine
   engine_version                      = var.engine_version
@@ -147,8 +149,6 @@ resource "aws_db_option_group" "mssql_rds" {
         for_each = option.value["option_settings"]
 
         content {
-          # name  = option_settings.key
-          # value = option_settings.value
           name  = option_settings.value["name"]
           value = option_settings.value["value"]
         }
