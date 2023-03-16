@@ -1,3 +1,7 @@
+output "account_id" {
+  value = data.aws_caller_identity.current.account_id
+}
+
 output "db_instance_address" {
   description = "The address of the RDS instance"
   value       = join("", module.db.*.db_instance_address)
@@ -18,10 +22,11 @@ output "db_instance_ca_cert_identifier" {
   value       = join("", module.db.*.db_instance_ca_cert_identifier)
 }
 
-output "db_instance_domain" {
-  description = "The ID of the Directory Service Active Directory domain the instance is joined to"
-  value       = join("", module.db.*.db_instance_domain)
-}
+# output "db_instance_domain" {
+#   description = "The ID of the Directory Service Active Directory domain the instance is joined to"
+#   value       = [module.db.*.db_instance_domain]
+#   # value = join("", module.db[0].db_instance_domain)
+# }
 
 output "db_instance_domain_iam_role_name" {
   description = "The name of the IAM role to be used when making API calls to the Directory Service. "
@@ -96,5 +101,5 @@ output "master_secret_arn" {
 
 output "master_secret_id" {
   description = "The id of the secret storing root credentials."
-  value       = aws_secretsmanager_secret.db.*.id
+  value       = aws_secretsmanager_secret.db[0].id
 }

@@ -51,8 +51,6 @@ variable "auto_minor_version_upgrade" {
   default     = true
 }
 
-# https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Appendix.SQLServer.CommonDBATasks.Collation.html
-
 variable "backup_retention_period" {
   description = "How long to keep backups for (in days)"
   type        = number
@@ -231,10 +229,20 @@ variable "multi_az" {
   default     = false
 }
 
-variable "option_group_name" {
-  description = "The name of this specific dbs option group."
-  type        = string
-  default     = ""
+variable "mssql_options" {
+  # type        = list(any)
+  description = "A list of options to implement in this SQL Server database."
+  # default = [[]]
+  # variable "mssql_options" {
+  #   description = "A list of options to implement in this SQL Server database."
+  #   # type        = map(any)
+  type = list(object({
+    option_name = optional(string, null)
+    option_settings = optional(list(object({
+      name  = optional(string, null)
+      value = optional(string, null)
+    })), null)
+  }))
 }
 
 variable "parameter_group_family" {

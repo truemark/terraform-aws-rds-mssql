@@ -19,7 +19,7 @@ module "db" {
   db_subnet_group_use_name_prefix     = var.db_subnet_group_use_name_prefix
   deletion_protection                 = var.deletion_protection
   domain                              = var.domain_id
-  domain_iam_role_name                = aws_iam_role.ad[count.index].name
+  domain_iam_role_name                = var.domain_id == "" ? "" : "${var.instance_name}-active-directory"
   enabled_cloudwatch_logs_exports     = ["agent", "error"]
   engine                              = var.engine
   engine_version                      = var.engine_version
@@ -36,7 +36,7 @@ module "db" {
   monitoring_interval                 = var.monitoring_interval
   monitoring_role_name                = var.monitoring_role_name == null ? "${var.instance_name}-monitoring-role" : var.monitoring_role_name
   multi_az                            = var.multi_az
-  option_group_name                   = aws_db_option_group.mssql_rds[0].name
+  option_group_name                   = aws_db_option_group.mssql_rds.name
   parameter_group_name                = aws_db_parameter_group.db_parameter_group[count.index].name
   password                            = random_password.root_password[count.index].result
   performance_insights_enabled        = var.performance_insights_enabled
@@ -134,37 +134,31 @@ resource "aws_security_group" "db_security_group" {
   }
 }
 
-#-----------------------------------------------------------------------------
-# Define the option group explicitly so we can implement SQLSERVER_BACKUP_RESTORE
+# Define the option group explicitly.
 resource "aws_db_option_group" "mssql_rds" {
-  count                    = var.create ? 1 : 0
+
+  dynamic "option" {
+    for_each = { for u in var.mssql_options : u["option_name"] => u }
+    content {
+      option_name = option.value["option_name"]
+
+      dynamic "option_settings" {
+        for_each = option.value["option_settings"]
+
+        content {
+          name  = option_settings.value["name"]
+          value = option_settings.value["value"]
+        }
+
+      }
+    }
+  }
+
   name_prefix              = var.instance_name
   option_group_description = "MSSQL RDS Option Group managed by Terraform."
   engine_name              = var.engine
   major_engine_version     = var.major_engine_version
   tags                     = var.tags
-
-  option {
-    option_name = "SQLSERVER_BACKUP_RESTORE"
-    option_settings {
-      name  = "IAM_ROLE_ARN"
-      value = aws_iam_role.s3_data_archive[0].arn
-    }
-  }
-
-  option {
-    option_name = "SQLSERVER_AUDIT"
-    option_settings {
-      name  = "IAM_ROLE_ARN"
-      value = aws_iam_role.audit[0].arn
-    }
-
-    option_settings {
-      name  = "S3_BUCKET_ARN"
-      value = "arn:aws:s3:::${var.audit_bucket_name}"
-    }
-
-  }
 
 }
 
@@ -177,6 +171,9 @@ resource "aws_db_instance_role_association" "s3_data_archive" {
   db_instance_identifier = module.db[count.index].db_instance_id
   feature_name           = "S3_INTEGRATION"
   role_arn               = join("", aws_iam_role.s3_data_archive.*.arn)
+  depends_on = [
+
+  ]
 }
 
 resource "aws_iam_role" "s3_data_archive" {
@@ -191,7 +188,7 @@ resource "aws_iam_role_policy_attachment" "s3_data_archive" {
   count = var.create && var.archive_bucket_name != null ? 1 : 0
   role  = join("", aws_iam_role.s3_data_archive.*.name)
   # The actions the role can execute
-  policy_arn = join("", aws_iam_policy.s3_data_archive.*.arn)
+  policy_arn = join("", aws_iam_policy.s3_data_archive[*].arn)
 }
 
 resource "aws_iam_policy" "s3_data_archive" {
@@ -222,7 +219,8 @@ data "aws_iam_policy_document" "exec_s3_data_archive" {
   statement {
     actions = [
       "s3:ListBucket",
-      "s3:GetBucketLocation"
+      "s3:GetBucketLocation",
+      "s3:GetBucketACL"
     ]
     resources = [
       "arn:aws:s3:::${var.archive_bucket_name}"
@@ -235,10 +233,20 @@ data "aws_iam_policy_document" "exec_s3_data_archive" {
       "s3:GetObject",
       "s3:PutObject",
       "s3:ListMultipartUploadParts",
-      "s3:AbortMultipartUpload",
+      "s3:AbortMultipartUpload"
     ]
     resources = [
       "arn:aws:s3:::${var.archive_bucket_name}/*"
+    ]
+    effect = "Allow"
+  }
+
+  statement {
+    actions = [
+      "s3:ListAllMyBuckets"
+    ]
+    resources = [
+      "*"
     ]
     effect = "Allow"
   }
@@ -248,7 +256,8 @@ data "aws_iam_policy_document" "exec_s3_data_archive" {
     content {
       actions = [
         "kms:Decrypt",
-        "kms:Encrypt"
+        "kms:Encrypt",
+        "kms:DescribeKey"
       ]
       resources = [
         statement.value
@@ -268,6 +277,9 @@ resource "aws_db_instance_role_association" "audit" {
   db_instance_identifier = module.db[count.index].db_instance_id
   feature_name           = "SQLSERVER_AUDIT"
   role_arn               = join("", aws_iam_role.audit.*.arn)
+  depends_on = [
+    aws_iam_role.audit
+  ]
 }
 
 resource "aws_iam_role" "audit" {
@@ -281,7 +293,7 @@ resource "aws_iam_role_policy_attachment" "audit" {
   count = var.create && var.audit_bucket_name != null ? 1 : 0
   role  = join("", aws_iam_role.audit.*.name)
   # The actions the role can execute
-  policy_arn = join("", aws_iam_policy.audit.*.arn)
+  policy_arn = join("", aws_iam_policy.audit[*].arn)
 }
 
 resource "aws_iam_policy" "audit" {
@@ -344,4 +356,7 @@ data "aws_iam_policy_document" "audit" {
     effect = "Allow"
   }
 }
+
+data "aws_caller_identity" "current" {}
+
 
