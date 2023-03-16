@@ -1,28 +1,25 @@
 module "db" {
-  count                           = var.create ? 1 : 0
-  source                          = "terraform-aws-modules/rds/aws"
-  version                         = "5.6.0"
-  allocated_storage               = var.allocated_storage
-  allow_major_version_upgrade     = var.allow_major_version_upgrade
-  apply_immediately               = var.apply_immediately
-  auto_minor_version_upgrade      = var.auto_minor_version_upgrade
-  backup_retention_period         = var.backup_retention_period
-  backup_window                   = var.backup_window
-  character_set_name              = var.character_set_name
-  copy_tags_to_snapshot           = var.copy_tags_to_snapshot
-  create_db_option_group          = false
-  create_db_parameter_group       = false
-  create_db_subnet_group          = true
-  create_monitoring_role          = true
-  db_subnet_group_description     = "Subnet group for ${var.instance_name}. Managed by Terraform."
-  db_subnet_group_name            = var.instance_name
-  db_subnet_group_use_name_prefix = var.db_subnet_group_use_name_prefix
-  deletion_protection             = var.deletion_protection
-  domain                          = var.domain_id
-  # domain_iam_role_name                = var.domain_id == "" ? "" : "${var.instance_name}-active-directory"
-  # domain_iam_role_name                = "rds-directoryservice-access-role"
-  domain_iam_role_name = var.domain_id == "" ? "" : "${var.instance_name}-active-directory"
-
+  count                               = var.create ? 1 : 0
+  source                              = "terraform-aws-modules/rds/aws"
+  version                             = "5.6.0"
+  allocated_storage                   = var.allocated_storage
+  allow_major_version_upgrade         = var.allow_major_version_upgrade
+  apply_immediately                   = var.apply_immediately
+  auto_minor_version_upgrade          = var.auto_minor_version_upgrade
+  backup_retention_period             = var.backup_retention_period
+  backup_window                       = var.backup_window
+  character_set_name                  = var.character_set_name
+  copy_tags_to_snapshot               = var.copy_tags_to_snapshot
+  create_db_option_group              = false
+  create_db_parameter_group           = false
+  create_db_subnet_group              = true
+  create_monitoring_role              = true
+  db_subnet_group_description         = "Subnet group for ${var.instance_name}. Managed by Terraform."
+  db_subnet_group_name                = var.instance_name
+  db_subnet_group_use_name_prefix     = var.db_subnet_group_use_name_prefix
+  deletion_protection                 = var.deletion_protection
+  domain                              = var.domain_id
+  domain_iam_role_name                = var.domain_id == "" ? "" : "${var.instance_name}-active-directory"
   enabled_cloudwatch_logs_exports     = ["agent", "error"]
   engine                              = var.engine
   engine_version                      = var.engine_version

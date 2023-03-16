@@ -1,6 +1,4 @@
-
 resource "aws_iam_role" "ad" {
-  # for_each = var.domain_id == null ? [] : toset([var.domain_id])
   count = var.create && var.domain_id == "" ? 0 : 1
   name  = "${lower(var.instance_name)}-active-directory"
   assume_role_policy = jsonencode({
@@ -20,7 +18,6 @@ resource "aws_iam_role" "ad" {
 }
 
 resource "aws_iam_role_policy_attachment" "ad" {
-  # for_each = var.domain_id == null ? [] : toset([var.domain_id])
   count = var.create && var.domain_id == "" ? 0 : 1
 
   role = aws_iam_role.ad[0].name
