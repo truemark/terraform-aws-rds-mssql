@@ -257,7 +257,8 @@ data "aws_iam_policy_document" "exec_s3_data_archive" {
       actions = [
         "kms:Decrypt",
         "kms:Encrypt",
-        "kms:DescribeKey"
+        "kms:DescribeKey",
+        "kms:GenerateDataKey"
       ]
       resources = [
         statement.value
