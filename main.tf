@@ -199,6 +199,13 @@ resource "aws_iam_policy" "s3_data_archive" {
 }
 
 data "aws_iam_policy_document" "assume_s3_data_archive_role_policy" {
+  source_policy_documents = [
+    data.aws_iam_policy_document.assume_s3_data_archive_role_policy_rds[0].json,
+    data.aws_iam_policy_document.share_s3_data_archive_sts.json
+  ]
+}
+
+data "aws_iam_policy_document" "assume_s3_data_archive_role_policy_rds" {
   count = var.create && var.archive_bucket_name != null ? 1 : 0
   statement {
     actions = [
@@ -267,6 +274,64 @@ data "aws_iam_policy_document" "exec_s3_data_archive" {
     }
   }
 }
+################################################################################
+# If a nonprod account number parameter is specified, grant the account number
+# read access to the backup destination.
+
+data "aws_iam_policy_document" "share_s3_data_archive_sts" {
+  statement {
+    sid     = "STSassumeRole"
+    effect  = "Allow"
+    actions = ["sts:AssumeRole"]
+    principals {
+      type        = "AWS"
+      identifiers = ["arn:aws:iam::${var.share_to_nonprod_account}:role/TrueMarkDatabaseAutomation"]
+    }
+  }
+}
+
+data "aws_iam_policy_document" "share_s3_data_archive" {
+  count = var.create && var.share_to_nonprod_account != null ? 1 : 0
+  statement {
+    actions = [
+      "s3:ListBucket",
+      "s3:GetBucketLocation"
+    ]
+    resources = [
+      "arn:aws:s3:::${var.archive_bucket_name}"
+    ]
+    effect = "Allow"
+  }
+
+  statement {
+
+    actions = [
+      "s3:GetObject"
+    ]
+    resources = [
+      "arn:aws:s3:::${var.archive_bucket_name}/*"
+    ]
+    effect = "Allow"
+  }
+}
+
+resource "aws_iam_role_policy_attachment" "share_s3_data_archive" {
+  count = var.create && var.share_to_nonprod_account != null ? 1 : 0
+  role  = join("", aws_iam_role.s3_data_archive.*.name)
+  # The actions the role can execute
+  policy_arn = join("", aws_iam_policy.share_s3_data_archive[*].arn)
+}
+
+resource "aws_iam_policy" "share_s3_data_archive" {
+  count       = var.create && var.share_to_nonprod_account != null ? 1 : 0
+  name        = "s3-data-archive-${lower(var.instance_name)}"
+  description = "Terraform managed RDS Instance policy."
+  policy      = join("", data.aws_iam_policy_document.share_s3_data_archive.*.json)
+}
+
+
+
+
 
 ################################################################################
 # Create an IAM policy to attach to the instance role.
