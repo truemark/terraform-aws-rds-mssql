@@ -252,7 +252,7 @@ data "aws_iam_policy_document" "exec_s3_data_archive" {
   }
 
   dynamic "statement" {
-    for_each = { for a in [var.kms_key_id] : a => a }
+    for_each = { for a in var.kms_key_id == null ? [] : [var.kms_key_id] : a => a }
     content {
       actions = [
         "kms:Decrypt",
