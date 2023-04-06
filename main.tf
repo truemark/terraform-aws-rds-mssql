@@ -52,6 +52,11 @@ module "db" {
   timezone                            = var.timezone
   username                            = var.username
   vpc_security_group_ids              = [aws_security_group.db_security_group[count.index].id]
+  timeouts = {
+    create = "80m"
+    update = "80m"
+    delete = "40m"
+  }
 }
 
 resource "aws_db_parameter_group" "db_parameter_group" {
