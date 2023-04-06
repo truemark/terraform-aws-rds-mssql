@@ -14,6 +14,7 @@ module "db" {
   create_db_parameter_group           = false
   create_db_subnet_group              = true
   create_monitoring_role              = true
+  create_random_password              = false
   db_subnet_group_description         = "Subnet group for ${var.instance_name}. Managed by Terraform."
   db_subnet_group_name                = var.instance_name
   db_subnet_group_use_name_prefix     = var.db_subnet_group_use_name_prefix
