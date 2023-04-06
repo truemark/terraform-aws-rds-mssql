@@ -120,7 +120,13 @@ variable "deletion_protection" {
 variable "domain_id" {
   description = "The ID of the Directory Service Active Directory domain to create the instance in."
   type        = string
-  default     = ""
+  default     = null
+}
+
+variable "domain_iam_role_name" {
+  description = "The name of the IAM role to be used when making API calls to the Directory Service. If not provided, one is generated."
+  type        = string
+  default     = null
 }
 
 variable "egress_cidrs" {
@@ -360,4 +366,22 @@ variable "username" {
 variable "vpc_id" {
   description = "The ID of the VPC to provision a db in."
   type        = string
+}
+
+variable "db_instance_create_timeout" {
+  description = "Timeout in minutes to wait when creating the DB instance."
+  type        = number
+  default     = 80
+}
+
+variable "db_instance_update_timeout" {
+  description = "Timeout in minutes to wait when updating the DB instance."
+  type = number
+  default = 80
+}
+
+variable "db_instance_delete_timeout" {
+  description = "Timeout in minutes to wait when deleting the DB instance."
+  type = number
+  default = 40
 }

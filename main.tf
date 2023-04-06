@@ -1,3 +1,34 @@
+locals {
+  domain_role_name = "${var.instance_name}"
+}
+
+data "aws_iam_policy_document" "assume_role_policy" {
+  count = var.domain_id != null && var.domain_iam_role_name == null ? 1 : 0
+  statement {
+    sid = "AssumeRole"
+    actions = ["sts:AssumeRole"]
+    principals {
+      type        = "Service"
+      identifiers = ["rds.amazonaws.com"]
+    }
+  }
+}
+
+resource "aws_iam_role" "domain" {
+  count = var.domain_id != null && var.domain_iam_role_name == null ? 1 : 0
+  name = local.domain_role_name
+  description = "Role used by RDS for Active Directory"
+  force_detach_policies = true
+  assume_role_policy = data.aws_iam_policy_document.assume_role_policy[count.index].json
+  tags = var.tags
+}
+
+resource "aws_iam_role_policy_attachment" "domain" {
+  count = var.domain_id != null && var.domain_iam_role_name == null ? 1 : 0
+  role = aws_iam_role.ad[count.index].id
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonRDSDirectoryServiceAccess"
+}
+
 module "db" {
   count                               = var.create ? 1 : 0
   source                              = "terraform-aws-modules/rds/aws"
@@ -20,7 +51,7 @@ module "db" {
   db_subnet_group_use_name_prefix     = var.db_subnet_group_use_name_prefix
   deletion_protection                 = var.deletion_protection
   domain                              = var.domain_id
-  domain_iam_role_name                = var.domain_id == "" ? "" : "${var.instance_name}-active-directory"
+  domain_iam_role_name                = var.domain_id == null ? null : var.domain_iam_role_name != null ? var.domain_iam_role_name : local.domain_role_name
   enabled_cloudwatch_logs_exports     = ["agent", "error"]
   engine                              = var.engine
   engine_version                      = var.engine_version
@@ -54,9 +85,9 @@ module "db" {
   username                            = var.username
   vpc_security_group_ids              = [aws_security_group.db_security_group[count.index].id]
   timeouts = {
-    create = "80m"
-    update = "80m"
-    delete = "40m"
+    create = "${var.db_instance_create_timeout}m"
+    update = "${var.db_instance_update_timeout}m"
+    delete = "${var.db_instance_delete_timeout}m"
   }
 }
 
