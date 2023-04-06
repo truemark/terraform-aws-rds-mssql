@@ -1,5 +1,5 @@
 locals {
-  domain_role_name = var.instance_name
+  domain_role_name = "${var.instance_name}-active-directory"
 }
 
 data "aws_iam_policy_document" "assume_role_policy" {
@@ -25,7 +25,7 @@ resource "aws_iam_role" "domain" {
 
 resource "aws_iam_role_policy_attachment" "domain" {
   count      = var.domain_id != null && var.domain_iam_role_name == null ? 1 : 0
-  role       = aws_iam_role.ad[count.index].id
+  role       = aws_iam_role.domain[count.index].id
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonRDSDirectoryServiceAccess"
 }
 
