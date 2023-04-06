@@ -1,11 +1,11 @@
 locals {
-  domain_role_name = "${var.instance_name}"
+  domain_role_name = var.instance_name
 }
 
 data "aws_iam_policy_document" "assume_role_policy" {
   count = var.domain_id != null && var.domain_iam_role_name == null ? 1 : 0
   statement {
-    sid = "AssumeRole"
+    sid     = "AssumeRole"
     actions = ["sts:AssumeRole"]
     principals {
       type        = "Service"
@@ -15,17 +15,17 @@ data "aws_iam_policy_document" "assume_role_policy" {
 }
 
 resource "aws_iam_role" "domain" {
-  count = var.domain_id != null && var.domain_iam_role_name == null ? 1 : 0
-  name = local.domain_role_name
-  description = "Role used by RDS for Active Directory"
+  count                 = var.domain_id != null && var.domain_iam_role_name == null ? 1 : 0
+  name                  = local.domain_role_name
+  description           = "Role used by RDS for Active Directory"
   force_detach_policies = true
-  assume_role_policy = data.aws_iam_policy_document.assume_role_policy[count.index].json
-  tags = var.tags
+  assume_role_policy    = data.aws_iam_policy_document.assume_role_policy[count.index].json
+  tags                  = var.tags
 }
 
 resource "aws_iam_role_policy_attachment" "domain" {
-  count = var.domain_id != null && var.domain_iam_role_name == null ? 1 : 0
-  role = aws_iam_role.ad[count.index].id
+  count      = var.domain_id != null && var.domain_iam_role_name == null ? 1 : 0
+  role       = aws_iam_role.ad[count.index].id
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonRDSDirectoryServiceAccess"
 }
 

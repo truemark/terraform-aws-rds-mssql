@@ -376,12 +376,12 @@ variable "db_instance_create_timeout" {
 
 variable "db_instance_update_timeout" {
   description = "Timeout in minutes to wait when updating the DB instance."
-  type = number
-  default = 80
+  type        = number
+  default     = 80
 }
 
 variable "db_instance_delete_timeout" {
   description = "Timeout in minutes to wait when deleting the DB instance."
-  type = number
-  default = 40
+  type        = number
+  default     = 40
 }
