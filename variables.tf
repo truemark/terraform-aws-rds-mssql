@@ -354,7 +354,7 @@ variable "timezone" {
 variable "username" {
   description = "The master database account to create."
   type        = string
-  default     = "root"
+  default     = "admin"
 }
 
 variable "vpc_id" {
