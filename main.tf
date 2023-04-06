@@ -125,7 +125,7 @@ resource "aws_secretsmanager_secret_version" "db" {
   count     = var.create && var.store_master_password_as_secret ? 1 : 0
   secret_id = aws_secretsmanager_secret.db[count.index].id
   secret_string = jsonencode({
-    "username"       = "root"
+    "username"       = var.username
     "password"       = random_password.root_password[count.index].result
     "host"           = module.db[count.index].db_instance_address
     "port"           = module.db[count.index].db_instance_port
