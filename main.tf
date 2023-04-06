@@ -89,6 +89,9 @@ module "db" {
     update = "${var.db_instance_update_timeout}m"
     delete = "${var.db_instance_delete_timeout}m"
   }
+  depends_on = [
+    aws_iam_role_policy_attachment.ad,
+  ]
 }
 
 resource "aws_db_parameter_group" "db_parameter_group" {
