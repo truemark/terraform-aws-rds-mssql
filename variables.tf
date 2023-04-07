@@ -185,7 +185,7 @@ variable "instance_name" {
 variable "iops" {
   description = "The iops to associate with the storage"
   type        = number
-  default     = 0
+  # default     = 0
 }
 
 variable "kms_key_id" {

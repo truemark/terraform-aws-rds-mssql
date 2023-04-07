@@ -59,7 +59,7 @@ module "db" {
   iam_database_authentication_enabled = var.iam_database_authentication_enabled
   identifier                          = var.instance_name
   instance_class                      = var.instance_class
-  iops                                = var.iops
+  iops                                = var.iops == 0 ? null : var.iops
   kms_key_id                          = var.kms_key_id
   license_model                       = var.license_model
   maintenance_window                  = var.maintenance_window

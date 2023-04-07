@@ -101,5 +101,5 @@ output "master_secret_arn" {
 
 output "master_secret_id" {
   description = "The id of the secret storing root credentials."
-  value       = aws_secretsmanager_secret.db[0].id
+  value       = aws_secretsmanager_secret.db.*.id
 }
