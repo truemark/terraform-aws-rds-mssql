@@ -103,3 +103,8 @@ output "master_secret_id" {
   description = "The id of the secret storing root credentials."
   value       = aws_secretsmanager_secret.db.*.id
 }
+
+output "db_security_group_id" {
+  description = "The id of the database security group"
+  value       = aws_security_group.db_security_group.*.id
+}
