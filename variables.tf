@@ -185,7 +185,7 @@ variable "instance_name" {
 variable "iops" {
   description = "The iops to associate with the storage"
   type        = number
-  default     = 0
+  # default     = 0
 }
 
 variable "kms_key_id" {
@@ -238,11 +238,11 @@ variable "multi_az" {
 variable "db_options" {
   description = "A list of options to implement in this SQL Server database."
   type = list(object({
-    option_name = optional(string, null)
-    port = optional(number, null)
-    db_security_group_memberships = optional(list(string), null)
+    option_name                    = optional(string, null)
+    port                           = optional(number, null)
+    db_security_group_memberships  = optional(list(string), null)
     vpc_security_group_memberships = optional(list(string), null)
-    version = optional(string, null)
+    version                        = optional(string, null)
     option_settings = optional(list(object({
       name  = optional(string, null)
       value = optional(string, null)
