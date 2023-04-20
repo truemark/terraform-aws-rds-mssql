@@ -178,10 +178,13 @@ resource "aws_security_group" "db_security_group" {
 resource "aws_db_option_group" "mssql_rds" {
 
   dynamic "option" {
-    for_each = { for u in var.mssql_options : u["option_name"] => u }
+    for_each = { for u in var.db_options : u["option_name"] => u }
     content {
       option_name = option.value["option_name"]
-
+      port = option.value["port"]
+      version = option.value["version"]
+      db_security_group_memberships = option.value["db_security_group_memberships"]
+      vpc_security_group_memberships = option.value["vpc_security_group_memberships"]
       dynamic "option_settings" {
         for_each = option.value["option_settings"]
 
@@ -189,7 +192,6 @@ resource "aws_db_option_group" "mssql_rds" {
           name  = option_settings.value["name"]
           value = option_settings.value["value"]
         }
-
       }
     }
   }
