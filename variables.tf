@@ -304,6 +304,12 @@ variable "security_group_tags" {
   default     = {}
 }
 
+variable "security_group_ports" {
+  description = "Additional ports to allow on the security group"
+  type        = list(number)
+  default     = []
+}
+
 variable "skip_final_snapshot" {
   description = "Should a final snapshot be created on cluster destroy"
   type        = bool
