@@ -250,6 +250,12 @@ variable "db_options" {
   }))
 }
 
+variable "share_to_nonprod_account" {
+  type        = string
+  description = "The account number to share the backup destination with. Used for refreshing nonprod envs."
+  default     = null
+}
+
 variable "parameter_group_family" {
   description = "The family of the DB parameter group"
   type        = string
