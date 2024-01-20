@@ -252,9 +252,10 @@ resource "aws_iam_policy" "s3_data_archive" {
 }
 
 data "aws_iam_policy_document" "assume_s3_data_archive_role_policy" {
+  count = var.create && var.share_to_nonprod_account != null ? 1 : 0
   source_policy_documents = [
     data.aws_iam_policy_document.assume_s3_data_archive_role_policy_rds[0].json,
-    data.aws_iam_policy_document.share_s3_data_archive_sts.json
+    data.aws_iam_policy_document.share_s3_data_archive_sts[count.index].json
   ]
 }
 
@@ -332,6 +333,7 @@ data "aws_iam_policy_document" "exec_s3_data_archive" {
 # read access to the backup destination.
 
 data "aws_iam_policy_document" "share_s3_data_archive_sts" {
+  count = var.create && var.share_to_nonprod_account != null ? 1 : 0
   statement {
     sid     = "STSassumeRole"
     effect  = "Allow"
