@@ -34,6 +34,7 @@ module "db" {
   source                              = "terraform-aws-modules/rds/aws"
   version                             = "5.6.0"
   allocated_storage                   = var.allocated_storage
+  availability_zone                   = var.availability_zone
   allow_major_version_upgrade         = var.allow_major_version_upgrade
   apply_immediately                   = var.apply_immediately
   auto_minor_version_upgrade          = var.auto_minor_version_upgrade

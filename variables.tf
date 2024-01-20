@@ -51,6 +51,12 @@ variable "auto_minor_version_upgrade" {
   default     = true
 }
 
+variable "availability_zone" {
+  description = "The AZ for the RDS instance."
+  type        = string
+  default     = null
+}
+
 variable "backup_retention_period" {
   description = "How long to keep backups for (in days)"
   type        = number
