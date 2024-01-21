@@ -1,5 +1,8 @@
 locals {
   domain_role_name = "${var.instance_name}-active-directory"
+  instance_tags = {
+    "backup:policy" = var.backup_policy
+  }
 }
 
 data "aws_iam_policy_document" "ad_assume_role_policy" {
@@ -47,6 +50,7 @@ module "db" {
   create_db_subnet_group              = true
   create_monitoring_role              = var.create_monitoring_role
   create_random_password              = false
+  db_instance_tags                    = local.instance_tags
   db_subnet_group_description         = "Subnet group for ${var.instance_name}. Managed by Terraform."
   db_subnet_group_name                = var.instance_name
   db_subnet_group_use_name_prefix     = var.db_subnet_group_use_name_prefix
