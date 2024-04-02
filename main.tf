@@ -35,7 +35,7 @@ resource "aws_iam_role_policy_attachment" "ad" {
 module "db" {
   count                               = var.create ? 1 : 0
   source                              = "terraform-aws-modules/rds/aws"
-  version                             = "5.6.0"
+  version                             = "5.9.0"
   allocated_storage                   = var.allocated_storage
   availability_zone                   = var.availability_zone
   allow_major_version_upgrade         = var.allow_major_version_upgrade
@@ -225,12 +225,10 @@ resource "aws_db_option_group" "mssql_rds" {
 
 resource "aws_db_instance_role_association" "s3_data_archive" {
   count                  = var.create && var.archive_bucket_name != null && var.share_to_nonprod_account != null ? 1 : 0
-  db_instance_identifier = module.db[count.index].db_instance_id
+  db_instance_identifier = var.instance_name
   feature_name           = "S3_INTEGRATION"
   role_arn               = join("", aws_iam_role.s3_data_archive.*.arn)
-  depends_on = [
-
-  ]
+  depends_on             = [module.db]
 }
 
 resource "aws_iam_role" "s3_data_archive" {
@@ -383,7 +381,7 @@ resource "aws_iam_role_policy_attachment" "share_s3_data_archive" {
 
 resource "aws_iam_policy" "share_s3_data_archive" {
   count       = var.create && var.share_to_nonprod_account != null ? 1 : 0
-  name        = "s3-data-archive-${lower(var.instance_name)}"
+  name        = "s3-data-archive-share-${lower(var.instance_name)}"
   description = "Terraform managed RDS Instance policy."
   policy      = join("", data.aws_iam_policy_document.share_s3_data_archive.*.json)
 }
@@ -399,7 +397,7 @@ resource "aws_iam_policy" "share_s3_data_archive" {
 
 resource "aws_db_instance_role_association" "audit" {
   count                  = var.create && var.audit_bucket_name != null ? 1 : 0
-  db_instance_identifier = module.db[count.index].db_instance_id
+  db_instance_identifier = var.instance_name #module.db[count.index].db_instance_id
   feature_name           = "SQLSERVER_AUDIT"
   role_arn               = join("", aws_iam_role.audit.*.arn)
   depends_on = [
