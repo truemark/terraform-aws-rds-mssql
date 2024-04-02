@@ -397,7 +397,7 @@ resource "aws_iam_policy" "share_s3_data_archive" {
 
 resource "aws_db_instance_role_association" "audit" {
   count                  = var.create && var.audit_bucket_name != null ? 1 : 0
-  db_instance_identifier = var.instance_name #module.db[count.index].db_instance_id
+  db_instance_identifier = var.instance_name
   feature_name           = "SQLSERVER_AUDIT"
   role_arn               = join("", aws_iam_role.audit.*.arn)
   depends_on = [
