@@ -22,11 +22,11 @@ output "db_instance_ca_cert_identifier" {
   value       = join("", module.db.*.db_instance_ca_cert_identifier)
 }
 
-# output "db_instance_domain" {
-#   description = "The ID of the Directory Service Active Directory domain the instance is joined to"
-#   value       = [module.db.*.db_instance_domain]
-#   # value = join("", module.db[0].db_instance_domain)
-# }
+output "db_instance_domain" {
+  description = "The ID of the Directory Service Active Directory domain the instance is joined to"
+  value       = [module.db.*.db_instance_domain]
+  # value = join("", module.db[0].db_instance_domain)
+}
 
 output "db_instance_domain_iam_role_name" {
   description = "The name of the IAM role to be used when making API calls to the Directory Service. "
@@ -43,10 +43,10 @@ output "db_instance_hosted_zone_id" {
   value       = join("", module.db.*.db_instance_hosted_zone_id)
 }
 
-output "db_instance_id" {
-  description = "The RDS instance ID"
-  value       = join("", module.db.*.db_instance_id)
-}
+# output "db_instance_id" {
+#   description = "The RDS instance ID"
+#   value       = join("", module.db.*.db_instance_id)
+# }
 
 output "db_instance_name" {
   description = "The database name"
