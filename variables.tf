@@ -21,7 +21,6 @@ variable "allow_major_version_upgrade" {
   default     = false
 }
 
-
 variable "allowed_security_groups" {
   description = "A list of Security Group ID's to allow access to."
   type        = list(string)
@@ -78,8 +77,8 @@ variable "backup_window" {
 
 variable "ca_cert_identifier" {
   description = "The identifier of the CA certificate for the DB instance"
-  type = string
-  default = "rds-ca-rsa2048-g1"
+  type        = string
+  default     = "rds-ca-rsa2048-g1"
 }
 
 variable "character_set_name" {
@@ -105,7 +104,6 @@ variable "create_monitoring_role" {
   type        = bool
   default     = true
 }
-
 
 variable "create_security_group" {
   description = "Whether to create security group for RDS cluster"
@@ -293,8 +291,6 @@ variable "multi_az" {
   type        = bool
   default     = false
 }
-
-
 
 variable "parameter_group_family" {
   description = "The family of the DB parameter group"

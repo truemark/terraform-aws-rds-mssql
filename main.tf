@@ -60,7 +60,6 @@ module "db" {
   create_db_parameter_group           = false
   create_db_subnet_group              = true
   create_monitoring_role              = var.create_monitoring_role
-  # create_random_password              = false
   db_instance_tags                    = local.instance_tags
   db_subnet_group_description         = "Subnet group for ${var.instance_name}. Managed by Terraform."
   db_subnet_group_name                = var.instance_name
@@ -88,7 +87,6 @@ module "db" {
   option_group_name                   = aws_db_option_group.mssql_rds.name
   parameter_group_name                = aws_db_parameter_group.db_parameter_group[count.index].name
   password                            = var.store_master_password_as_secret ? random_password.root_password[count.index].result : null
-  #password                            = random_password.root_password[count.index].result
   performance_insights_enabled        = var.performance_insights_enabled
   performance_insights_kms_key_id     = var.performance_insights_kms_key_id
   port                                = var.port
@@ -111,8 +109,6 @@ module "db" {
     aws_iam_role_policy_attachment.ad,
   ]
 }
-
-
 
 resource "aws_db_parameter_group" "db_parameter_group" {
   count       = var.create ? 1 : 0
@@ -156,7 +152,7 @@ resource "aws_secretsmanager_secret_version" "db" {
 }
 
 resource "random_password" "root_password" {
-  count     = var.create && var.store_master_password_as_secret ? 1 : 0
+  count = var.create && var.store_master_password_as_secret ? 1 : 0
 
   length  = var.random_password_length
   special = false
@@ -164,7 +160,7 @@ resource "random_password" "root_password" {
 }
 
 data "aws_secretsmanager_secret_version" "db" {
-  count     = var.create && var.store_master_password_as_secret ? 1 : 0
+  count = var.create && var.store_master_password_as_secret ? 1 : 0
 
   # There will only ever be one password here. Hard coding the index.
   secret_id  = aws_secretsmanager_secret.db[count.index].id
@@ -400,9 +396,6 @@ resource "aws_iam_policy" "share_s3_data_archive" {
   description = "Terraform managed RDS Instance policy."
   policy      = join("", data.aws_iam_policy_document.share_s3_data_archive.*.json)
 }
-
-
-
 
 
 ################################################################################
