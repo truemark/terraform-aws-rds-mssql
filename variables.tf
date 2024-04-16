@@ -422,5 +422,10 @@ variable "vpc_id" {
   type        = string
 }
 
+variable "generate_random_password" {
+  description = "Generate a random password for the master user."
+  type        = bool  
+  default = true
+}
 
 

@@ -86,7 +86,7 @@ module "db" {
   multi_az                            = var.multi_az
   option_group_name                   = aws_db_option_group.mssql_rds.name
   parameter_group_name                = aws_db_parameter_group.db_parameter_group[count.index].name
-  password                            = var.store_master_password_as_secret ? random_password.root_password[count.index].result : null
+  password                            = var.store_master_password_as_secret && var.generate_random_password ? random_password.root_password[count.index].result : null
   performance_insights_enabled        = var.performance_insights_enabled
   performance_insights_kms_key_id     = var.performance_insights_kms_key_id
   port                                = var.port
@@ -138,7 +138,7 @@ resource "aws_secretsmanager_secret" "db" {
 
 resource "aws_secretsmanager_secret_version" "db" {
 
-  count     = var.create && var.store_master_password_as_secret ? 1 : 0
+  count     = var.create && var.store_master_password_as_secret && var.generate_random_password ? 1 : 0
   secret_id = aws_secretsmanager_secret.db[count.index].id
   secret_string = jsonencode({
     "username"       = var.username
@@ -152,7 +152,7 @@ resource "aws_secretsmanager_secret_version" "db" {
 }
 
 resource "random_password" "root_password" {
-  count = var.create && var.store_master_password_as_secret ? 1 : 0
+  count = var.create && var.store_master_password_as_secret && var.generate_random_password ? 1 : 0
 
   length  = var.random_password_length
   special = false
