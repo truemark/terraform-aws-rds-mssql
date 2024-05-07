@@ -33,23 +33,23 @@ resource "aws_iam_role_policy_attachment" "ad" {
 }
 
 module "db" {
-  count                               = var.create ? 1 : 0
-  source                              = "terraform-aws-modules/rds/aws"
-  version                             = "5.9.0"
-  allocated_storage                   = var.allocated_storage
-  availability_zone                   = var.availability_zone
-  allow_major_version_upgrade         = var.allow_major_version_upgrade
-  apply_immediately                   = var.apply_immediately
-  auto_minor_version_upgrade          = var.auto_minor_version_upgrade
-  backup_retention_period             = var.backup_retention_period
-  backup_window                       = var.backup_window
-  character_set_name                  = var.character_set_name
-  copy_tags_to_snapshot               = var.copy_tags_to_snapshot
-  create_db_option_group              = false
-  create_db_parameter_group           = false
-  create_db_subnet_group              = true
-  create_monitoring_role              = var.create_monitoring_role
-  create_random_password              = false
+  count                       = var.create ? 1 : 0
+  source                      = "terraform-aws-modules/rds/aws"
+  version                     = "6.5.4"
+  allocated_storage           = var.allocated_storage
+  availability_zone           = var.availability_zone
+  allow_major_version_upgrade = var.allow_major_version_upgrade
+  apply_immediately           = var.apply_immediately
+  auto_minor_version_upgrade  = var.auto_minor_version_upgrade
+  backup_retention_period     = var.backup_retention_period
+  backup_window               = var.backup_window
+  character_set_name          = var.character_set_name
+  copy_tags_to_snapshot       = var.copy_tags_to_snapshot
+  create_db_option_group      = false
+  create_db_parameter_group   = false
+  create_db_subnet_group      = true
+  create_monitoring_role      = var.create_monitoring_role
+  #create_random_password              = false
   db_instance_tags                    = local.instance_tags
   db_subnet_group_description         = "Subnet group for ${var.instance_name}. Managed by Terraform."
   db_subnet_group_name                = var.instance_name
@@ -69,6 +69,7 @@ module "db" {
   license_model                       = var.license_model
   maintenance_window                  = var.maintenance_window
   major_engine_version                = var.major_engine_version
+  manage_master_user_password         = false
   max_allocated_storage               = var.max_allocated_storage
   monitoring_interval                 = var.monitoring_interval
   monitoring_role_name                = var.monitoring_role_name == null ? "${var.instance_name}-monitoring-role" : var.monitoring_role_name

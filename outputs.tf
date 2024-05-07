@@ -43,10 +43,10 @@ output "db_instance_hosted_zone_id" {
   value       = join("", module.db.*.db_instance_hosted_zone_id)
 }
 
-output "db_instance_id" {
-  description = "The RDS instance ID"
-  value       = join("", module.db.*.db_instance_id)
-}
+# output "db_instance_id" {
+#   description = "The RDS instance ID"
+#   value       = join("", module.db.*.db_instance_id)
+# }
 
 output "db_instance_name" {
   description = "The database name"
