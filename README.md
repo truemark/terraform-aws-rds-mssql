@@ -113,6 +113,7 @@ The following parameters are supported:
 - engine
 - engine_version
 - final_snapshot_identifier_prefix
+- generate_random_password
 - iam_database_authentication_enabled
 - iam_partition
 - ingress_cidrs

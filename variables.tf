@@ -204,6 +204,12 @@ variable "final_snapshot_identifier_prefix" {
   default     = "final"
 }
 
+variable "generate_random_password" {
+  description = "Generate a random password for the master user."
+  type        = bool
+  default     = true
+}
+
 variable "iam_database_authentication_enabled" {
   description = "Specifies whether IAM Database authentication should be enabled or not. Not all versions and instances are supported. Refer to the AWS documentation to see which versions are supported."
   type        = bool
@@ -420,12 +426,6 @@ variable "username" {
 variable "vpc_id" {
   description = "The ID of the VPC to provision a db in."
   type        = string
-}
-
-variable "generate_random_password" {
-  description = "Generate a random password for the master user."
-  type        = bool  
-  default = true
 }
 
 
