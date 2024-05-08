@@ -9,16 +9,16 @@ variable "allocated_storage" {
   default     = 20
 }
 
-variable "allow_major_version_upgrade" {
-  description = "Indicates that major version upgrades are allowed."
-  type        = bool
-  default     = false
-}
-
 variable "allowed_cidr_blocks" {
   description = "A list of CIDR blocks which are allowed to access the database"
   type        = list(string)
   default     = []
+}
+
+variable "allow_major_version_upgrade" {
+  description = "Indicates that major version upgrades are allowed."
+  type        = bool
+  default     = false
 }
 
 variable "allowed_security_groups" {
@@ -48,7 +48,7 @@ variable "audit_bucket_name" {
 variable "auto_minor_version_upgrade" {
   description = "Indicates that minor engine upgrades will be applied automatically to the DB instance during the maintenance window."
   type        = bool
-  default     = true
+  default     = false
 }
 
 variable "availability_zone" {
@@ -75,6 +75,12 @@ variable "backup_window" {
   default     = "03:00-03:30"
 }
 
+variable "ca_cert_identifier" {
+  description = "The identifier of the CA certificate for the DB instance"
+  type        = string
+  default     = "rds-ca-rsa2048-g1"
+}
+
 variable "character_set_name" {
   description = "The character set name to use for DB encoding in Oracle instances. This can't be changed. See Oracle Character Sets Supported in Amazon RDS and Collations and Character Sets for Microsoft SQL Server for more information. This can only be set on creation."
   type        = string
@@ -87,16 +93,16 @@ variable "copy_tags_to_snapshot" {
   default     = false
 }
 
-variable "create_monitoring_role" {
-  description = "Whether to create the IAM role for RDS enhanced monitoring"
-  type        = bool
-  default     = true
-}
-
 variable "create" {
   description = "Determines if resources are created."
   default     = true
   type        = bool
+}
+
+variable "create_monitoring_role" {
+  description = "Whether to create the IAM role for RDS enhanced monitoring"
+  type        = bool
+  default     = true
 }
 
 variable "create_security_group" {
@@ -109,6 +115,39 @@ variable "database_name" {
   description = "The DB name to create. If omitted, no database is created initially."
   type        = string
   default     = ""
+}
+
+variable "db_instance_create_timeout" {
+  description = "Timeout in minutes to wait when creating the DB instance."
+  type        = number
+  default     = 80
+}
+
+variable "db_instance_delete_timeout" {
+  description = "Timeout in minutes to wait when deleting the DB instance."
+  type        = number
+  default     = 40
+}
+
+variable "db_instance_update_timeout" {
+  description = "Timeout in minutes to wait when updating the DB instance."
+  type        = number
+  default     = 80
+}
+
+variable "db_options" {
+  description = "A list of options to implement in this SQL Server database."
+  type = list(object({
+    option_name                    = optional(string, null)
+    port                           = optional(number, null)
+    db_security_group_memberships  = optional(list(string), null)
+    vpc_security_group_memberships = optional(list(string), null)
+    version                        = optional(string, null)
+    option_settings = optional(list(object({
+      name  = optional(string, null)
+      value = optional(string, null)
+    })), null)
+  }))
 }
 
 variable "db_parameters" {
@@ -165,6 +204,12 @@ variable "final_snapshot_identifier_prefix" {
   default     = "final"
 }
 
+variable "generate_random_password" {
+  description = "Generate a random password for the master user."
+  type        = bool
+  default     = true
+}
+
 variable "iam_database_authentication_enabled" {
   description = "Specifies whether IAM Database authentication should be enabled or not. Not all versions and instances are supported. Refer to the AWS documentation to see which versions are supported."
   type        = bool
@@ -180,7 +225,7 @@ variable "iam_partition" {
 variable "ingress_cidrs" {
   description = "List of IPv4 CIDR ranges to use on all ingress rules."
   type        = list(string)
-  default     = ["0.0.0.0/0"]
+  default     = ["10.0.0.0/8"]
 }
 
 variable "instance_class" {
@@ -223,6 +268,12 @@ variable "major_engine_version" {
   default     = "15.00"
 }
 
+variable "manage_master_user_password" {
+  description = "Set to true to allow RDS to manage the master user password in Secrets Manager"
+  type        = bool
+  default     = true
+}
+
 variable "max_allocated_storage" {
   description = "Maximum storage size in GB."
   type        = number
@@ -245,27 +296,6 @@ variable "multi_az" {
   description = "Specifies if the RDS instance is multi-AZ."
   type        = bool
   default     = false
-}
-
-variable "db_options" {
-  description = "A list of options to implement in this SQL Server database."
-  type = list(object({
-    option_name                    = optional(string, null)
-    port                           = optional(number, null)
-    db_security_group_memberships  = optional(list(string), null)
-    vpc_security_group_memberships = optional(list(string), null)
-    version                        = optional(string, null)
-    option_settings = optional(list(object({
-      name  = optional(string, null)
-      value = optional(string, null)
-    })), null)
-  }))
-}
-
-variable "share_to_nonprod_account" {
-  type        = string
-  description = "The account number to share the backup destination with. Used for refreshing nonprod envs."
-  default     = null
 }
 
 variable "parameter_group_family" {
@@ -328,6 +358,12 @@ variable "security_group_ports" {
   default     = []
 }
 
+variable "share_to_nonprod_account" {
+  type        = string
+  description = "The account number to share the backup destination with. Used for refreshing nonprod envs."
+  default     = null
+}
+
 variable "skip_final_snapshot" {
   description = "Should a final snapshot be created on cluster destroy"
   type        = bool
@@ -353,8 +389,9 @@ variable "storage_type" {
 }
 
 variable "store_master_password_as_secret" {
-  description = "Toggle on or off storing the root password in Secrets Manager."
-  default     = true
+  description = "Set to true to allow self-management of the master user password in Secrets Manager"
+  type        = bool
+  default     = false
 }
 
 variable "subnet_group_use_name_prefix" {
@@ -391,20 +428,4 @@ variable "vpc_id" {
   type        = string
 }
 
-variable "db_instance_create_timeout" {
-  description = "Timeout in minutes to wait when creating the DB instance."
-  type        = number
-  default     = 80
-}
 
-variable "db_instance_update_timeout" {
-  description = "Timeout in minutes to wait when updating the DB instance."
-  type        = number
-  default     = 80
-}
-
-variable "db_instance_delete_timeout" {
-  description = "Timeout in minutes to wait when deleting the DB instance."
-  type        = number
-  default     = 40
-}
