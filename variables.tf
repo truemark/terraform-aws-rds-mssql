@@ -135,6 +135,12 @@ variable "db_instance_update_timeout" {
   default     = 80
 }
 
+variable "db_name" {
+  description = "The DB name to create. If omitted, no database is created initially"
+  type        = string
+  default     = null
+}
+
 variable "db_options" {
   description = "A list of options to implement in this SQL Server database."
   type = list(object({

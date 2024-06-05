@@ -45,7 +45,7 @@ locals {
 module "db" {
   count                               = var.create ? 1 : 0
   source                              = "terraform-aws-modules/rds/aws"
-  version                             = "6.5.4"
+  version                             = "6.6.0"
   allocated_storage                   = var.allocated_storage
   availability_zone                   = var.availability_zone
   allow_major_version_upgrade         = var.allow_major_version_upgrade
@@ -61,6 +61,7 @@ module "db" {
   create_db_subnet_group              = true
   create_monitoring_role              = var.create_monitoring_role
   db_instance_tags                    = local.instance_tags
+  db_name                             = var.db_name
   db_subnet_group_description         = "Subnet group for ${var.instance_name}. Managed by Terraform."
   db_subnet_group_name                = var.instance_name
   db_subnet_group_use_name_prefix     = var.db_subnet_group_use_name_prefix
