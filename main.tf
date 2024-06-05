@@ -489,10 +489,6 @@ data "aws_iam_policy_document" "audit" {
   }
 }
 
-output test {
-  value = var.instance_name
-}
-
 data "aws_caller_identity" "current" {}
 
 
