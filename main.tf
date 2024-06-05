@@ -61,7 +61,7 @@ module "db" {
   create_db_subnet_group              = true
   create_monitoring_role              = var.create_monitoring_role
   db_instance_tags                    = local.instance_tags
-  db_name                             = var.db_name
+  db_name                             = var.database_name
   db_subnet_group_description         = "Subnet group for ${var.instance_name}. Managed by Terraform."
   db_subnet_group_name                = var.instance_name
   db_subnet_group_use_name_prefix     = var.db_subnet_group_use_name_prefix

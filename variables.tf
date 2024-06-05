@@ -114,7 +114,7 @@ variable "create_security_group" {
 variable "database_name" {
   description = "The DB name to create. If omitted, no database is created initially."
   type        = string
-  default     = ""
+  default     = null
 }
 
 variable "db_instance_create_timeout" {
@@ -133,12 +133,6 @@ variable "db_instance_update_timeout" {
   description = "Timeout in minutes to wait when updating the DB instance."
   type        = number
   default     = 80
-}
-
-variable "db_name" {
-  description = "The DB name to create. If omitted, no database is created initially"
-  type        = string
-  default     = null
 }
 
 variable "db_options" {
