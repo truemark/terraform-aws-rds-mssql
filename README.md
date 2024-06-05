@@ -35,6 +35,7 @@ module "db" {
   archive_bucket_name          = module.data_archive.s3_bucket_name
   auto_minor_version_upgrade   = false
   backup_window                = "03:50-04:20"
+  db_name                      = var.database_name
   db_parameters                = local.sql2_db_parameters
   deletion_protection          = terraform.workspace == "prod" ? true : false
   engine                       = "sqlserver-se"
